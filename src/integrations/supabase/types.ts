@@ -290,6 +290,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_expiring_medicines: { Args: never; Returns: undefined }
+      check_low_stock_medicines: { Args: never; Returns: undefined }
       get_user_pharmacy_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -298,6 +300,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_notification_countdown: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "staff"
