@@ -5,8 +5,11 @@ import { YearlySalesChart } from '@/components/charts/YearlySalesChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { FileBarChart, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileBarChart, Package, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import { exportToCSV, formatCurrency, formatDateTime } from '@/lib/exportUtils';
 
 interface SaleRecord {
   id: string;
@@ -25,6 +28,7 @@ interface Pharmacy {
 }
 
 const AdminSales = () => {
+  const { toast } = useToast();
   const [salesData, setSalesData] = useState<{ month: string; total: number }[]>([]);
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
@@ -84,9 +88,9 @@ const AdminSales = () => {
     if (salesRes) {
       for (const sale of salesRes.slice(0, 50)) {
         const [pharmacyRes, medicineRes, profileRes] = await Promise.all([
-          supabase.from('pharmacies').select('name').eq('id', sale.pharmacy_id).single(),
-          supabase.from('medicines').select('name').eq('id', sale.medicine_id).single(),
-          supabase.from('profiles').select('email').eq('id', sale.staff_id).single(),
+          supabase.from('pharmacies').select('name').eq('id', sale.pharmacy_id).maybeSingle(),
+          supabase.from('medicines').select('name').eq('id', sale.medicine_id).maybeSingle(),
+          supabase.from('profiles').select('email').eq('id', sale.staff_id).maybeSingle(),
         ]);
 
         detailedSales.push({
@@ -106,22 +110,27 @@ const AdminSales = () => {
     setLoading(false);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
+  const handleExport = () => {
+    const exportData = sales.map(s => ({
+      date: formatDateTime(s.sale_date),
+      pharmacy: s.pharmacy_name,
+      medicine: s.medicine_name,
+      staff: s.staff_email,
+      quantity: s.quantity,
+      unit_price: s.unit_price.toFixed(2),
+      total: s.total_amount.toFixed(2),
+    }));
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    exportToCSV(exportData, `sales_report_${selectedYear}`, [
+      { key: 'date', label: 'Date' },
+      { key: 'pharmacy', label: 'Pharmacy' },
+      { key: 'medicine', label: 'Medicine' },
+      { key: 'staff', label: 'Staff' },
+      { key: 'quantity', label: 'Quantity' },
+      { key: 'unit_price', label: 'Unit Price' },
+      { key: 'total', label: 'Total' },
+    ]);
+    toast({ title: 'Sales report exported to CSV' });
   };
 
   return (
@@ -130,19 +139,24 @@ const AdminSales = () => {
         title="Sales Reports"
         description="View and analyze sales data across all pharmacies"
       >
-        <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by pharmacy" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Pharmacies</SelectItem>
-            {pharmacies.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by pharmacy" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Pharmacies</SelectItem>
+              {pharmacies.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" />Export
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Sales Chart */}
@@ -188,7 +202,7 @@ const AdminSales = () => {
                   {sales.map((sale) => (
                     <TableRow key={sale.id}>
                       <TableCell className="whitespace-nowrap">
-                        {formatDate(sale.sale_date)}
+                        {formatDateTime(sale.sale_date)}
                       </TableCell>
                       <TableCell>{sale.pharmacy_name}</TableCell>
                       <TableCell>{sale.medicine_name}</TableCell>
