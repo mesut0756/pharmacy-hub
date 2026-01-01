@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Pill, Edit, Download } from 'lucide-react';
+import { Plus, Search, Pill, Edit, Download, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { exportToCSV } from '@/lib/exportUtils';
@@ -21,10 +22,12 @@ const StaffMedicines = () => {
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [editingMed, setEditingMed] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [form, setForm] = useState({ 
     name: '', 
     category: '', 
     price: '', 
+    buying_price: '',
     stock_quantity: '', 
     low_stock_threshold: '10', 
     expiry_date: '', 
@@ -45,6 +48,7 @@ const StaffMedicines = () => {
       name: form.name,
       category: form.category || null,
       price: parseFloat(form.price), 
+      buying_price: form.buying_price ? parseFloat(form.buying_price) : 0,
       stock_quantity: parseInt(form.stock_quantity), 
       low_stock_threshold: parseInt(form.low_stock_threshold), 
       expiry_date: form.expiry_date || null,
@@ -65,10 +69,22 @@ const StaffMedicines = () => {
     fetchMedicines();
   };
 
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    const { error } = await supabase.from('medicines').delete().eq('id', deleteConfirm.id);
+    if (error) {
+      toast({ title: 'Error', description: 'Cannot delete medicine with existing sales', variant: 'destructive' });
+    } else {
+      toast({ title: 'Medicine deleted' });
+      fetchMedicines();
+    }
+    setDeleteConfirm(null);
+  };
+
   const resetForm = () => {
     setIsOpen(false); 
     setEditingMed(null); 
-    setForm({ name: '', category: '', price: '', stock_quantity: '', low_stock_threshold: '10', expiry_date: '', description: '', image_url: '' });
+    setForm({ name: '', category: '', price: '', buying_price: '', stock_quantity: '', low_stock_threshold: '10', expiry_date: '', description: '', image_url: '' });
   };
 
   const openEdit = (med: any) => {
@@ -77,6 +93,7 @@ const StaffMedicines = () => {
       name: med.name, 
       category: med.category || '', 
       price: med.price.toString(), 
+      buying_price: med.buying_price?.toString() || '',
       stock_quantity: med.stock_quantity.toString(), 
       low_stock_threshold: med.low_stock_threshold.toString(), 
       expiry_date: med.expiry_date || '', 
@@ -90,7 +107,9 @@ const StaffMedicines = () => {
     exportToCSV(medicines, 'medicines', [
       { key: 'name', label: 'Name' },
       { key: 'category', label: 'Category' },
-      { key: 'price', label: 'Price' },
+      { key: 'buying_price', label: 'Buying Price' },
+      { key: 'price', label: 'Selling Price' },
+      { key: 'profit', label: 'Profit' },
       { key: 'stock_quantity', label: 'Stock' },
       { key: 'low_stock_threshold', label: 'Low Stock Threshold' },
       { key: 'expiry_date', label: 'Expiry Date' },
@@ -131,10 +150,16 @@ const StaffMedicines = () => {
                   <Label>Name</Label>
                   <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
                 </div>
+                <div><Label>Category</Label><Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label>Category</Label><Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} /></div>
-                  <div><Label>Price</Label><Input type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required /></div>
+                  <div><Label>Buying Price</Label><Input type="number" step="0.01" value={form.buying_price} onChange={e => setForm({...form, buying_price: e.target.value})} placeholder="0.00" /></div>
+                  <div><Label>Selling Price</Label><Input type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required /></div>
                 </div>
+                {form.buying_price && form.price && (
+                  <div className="p-2 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm">
+                    Profit: ${(parseFloat(form.price) - parseFloat(form.buying_price)).toFixed(2)} per unit
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div><Label>Stock</Label><Input type="number" value={form.stock_quantity} onChange={e => setForm({...form, stock_quantity: e.target.value})} required /></div>
                   <div><Label>Low Stock Threshold</Label><Input type="number" value={form.low_stock_threshold} onChange={e => setForm({...form, low_stock_threshold: e.target.value})} /></div>
@@ -164,11 +189,26 @@ const StaffMedicines = () => {
                     <p className="font-semibold">{med.name}</p>
                     <p className="text-sm text-muted-foreground">{med.category || 'Uncategorized'}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(med)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(med)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="mt-3 flex justify-between items-center">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Buying: </span>
+                    <span>${Number(med.buying_price || 0).toFixed(2)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Profit: </span>
+                    <span className="text-green-600">${Number(med.profit || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="mt-2 flex justify-between items-center">
                   <span className="text-lg font-bold">${Number(med.price).toFixed(2)}</span>
                   <Badge variant={med.stock_quantity <= med.low_stock_threshold ? 'destructive' : 'secondary'}>
                     {med.stock_quantity} in stock
@@ -184,6 +224,24 @@ const StaffMedicines = () => {
           </Card>
         ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Medicine</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

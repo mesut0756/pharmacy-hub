@@ -11,6 +11,7 @@ import AdminPharmacies from "./pages/admin/AdminPharmacies";
 import AdminPharmacyDetail from "./pages/admin/AdminPharmacyDetail";
 import AdminSales from "./pages/admin/AdminSales";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminReceipts from "./pages/admin/AdminReceipts";
 import AdminSettings from "./pages/admin/AdminSettings";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffMedicines from "./pages/staff/StaffMedicines";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="pharmacies" element={<AdminPharmacies />} />
               <Route path="pharmacies/:id" element={<AdminPharmacyDetail />} />
               <Route path="sales" element={<AdminSales />} />
+              <Route path="receipts" element={<AdminReceipts />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
