@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Pill, ShoppingCart, Minus, Plus, Trash2, Receipt, User, CreditCard } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, Receipt, User, CreditCard, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ReceiptItem {
@@ -30,7 +29,9 @@ const StaffSale = () => {
   const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => { if (pharmacyId) fetchMedicines(); }, [pharmacyId]);
+  useEffect(() => {
+    if (pharmacyId) fetchMedicines();
+  }, [pharmacyId]);
 
   const fetchMedicines = async () => {
     const { data } = await supabase
@@ -46,9 +47,9 @@ const StaffSale = () => {
     const existing = receiptItems.find(item => item.medicine_id === med.id);
     if (existing) {
       if (existing.quantity < med.stock_quantity) {
-        setReceiptItems(items => 
-          items.map(item => 
-            item.medicine_id === med.id 
+        setReceiptItems(items =>
+          items.map(item =>
+            item.medicine_id === med.id
               ? { ...item, quantity: item.quantity + 1 }
               : item
           )
@@ -67,7 +68,7 @@ const StaffSale = () => {
   };
 
   const updateQuantity = (medicine_id: string, delta: number) => {
-    setReceiptItems(items => 
+    setReceiptItems(items =>
       items.map(item => {
         if (item.medicine_id === medicine_id) {
           const newQty = Math.max(1, Math.min(item.stock_available, item.quantity + delta));
@@ -84,36 +85,34 @@ const StaffSale = () => {
 
   const totalAmount = receiptItems.reduce((sum, item) => sum + (item.quantity * item.selling_price), 0);
 
-  const handleConfirmSale = async () => {
-    if (!customerName.trim()) {
-      toast({ title: 'Error', description: 'Please enter customer name', variant: 'destructive' });
-      return;
-    }
-    if (!paymentMethod) {
-      toast({ title: 'Error', description: 'Please select payment method', variant: 'destructive' });
-      return;
-    }
-    if (receiptItems.length === 0) {
-      toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
-      return;
-    }
+const handleConfirmSale = async () => {
+  if (!paymentMethod) {
+    toast({ title: 'Error', description: 'Please select payment method', variant: 'destructive' });
+    return;
+  }
+  if (receiptItems.length === 0) {
+    toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      // Create receipt
-      const { data: receipt, error: receiptError } = await supabase
-        .from('receipts')
-        .insert({
-          pharmacy_id: pharmacyId,
-          staff_id: user?.id,
-          customer_name: customerName.trim(),
-          payment_method: paymentMethod,
-          total_amount: totalAmount
-        })
-        .select()
-        .single();
+  setIsSubmitting(true);
+  try {
+    // Create receipt
+    const { data: receipt, error: receiptError } = await supabase
+      .from('receipts')
+      .insert({
+        pharmacy_id: pharmacyId,
+        staff_id: user?.id,
+        customer_name: customerName.trim() || null, // optional
+        payment_method: paymentMethod,
+        total_amount: totalAmount
+      })
+      .select()
+      .single();
 
-      if (receiptError) throw receiptError;
+    if (receiptError) throw receiptError;
+
+    // ...rest of code remains unchanged
 
       // Create receipt items
       const itemsToInsert = receiptItems.map(item => ({
@@ -141,9 +140,9 @@ const StaffSale = () => {
         }
       }
 
-      toast({ 
-        title: 'Sale completed!', 
-        description: `Receipt created for ${customerName} - Total: $${totalAmount.toFixed(2)}` 
+      toast({
+        title: 'Sale completed!',
+        description: `Receipt created for ${customerName} - Total: $${totalAmount.toFixed(2)}`
       });
 
       // Reset form
@@ -158,7 +157,7 @@ const StaffSale = () => {
     }
   };
 
-  const filtered = medicines.filter(m => 
+  const filteredMedicines = medicines.filter(m =>
     m.name.toLowerCase().includes(search.toLowerCase()) &&
     !receiptItems.find(item => item.medicine_id === m.id && item.quantity >= m.stock_quantity)
   );
@@ -167,75 +166,7 @@ const StaffSale = () => {
     <div className="space-y-6">
       <PageHeader title="Record Sale" description="Create a new sales receipt" />
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left: Medicine Selection */}
-        <div className="space-y-4">
-          <div>
-            <Label className="flex items-center gap-2 mb-2">
-              <Pill className="w-4 h-4" />
-              Select Medicine
-            </Label>
-            <Select onValueChange={(value) => {
-              const med = medicines.find(m => m.id === value);
-              if (med) addToReceipt(med);
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a medicine to add..." />
-              </SelectTrigger>
-              <SelectContent>
-                {medicines.filter(m => !receiptItems.find(item => item.medicine_id === m.id && item.quantity >= m.stock_quantity)).map(med => (
-                  <SelectItem key={med.id} value={med.id}>
-                    <div className="flex items-center justify-between w-full gap-4">
-                      <span>{med.name}</span>
-                      <span className="text-muted-foreground text-sm">${Number(med.price).toFixed(2)} ({med.stock_quantity} left)</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search medicines..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              className="pl-9" 
-            />
-          </div>
-          
-          <div className="grid gap-3 max-h-[50vh] overflow-y-auto pr-2">
-            {filtered.map(med => (
-              <Card 
-                key={med.id} 
-                className="cursor-pointer hover:border-primary transition-colors"
-                onClick={() => addToReceipt(med)}
-              >
-                <CardContent className="p-3 flex items-center gap-3">
-                  {med.image_url ? (
-                    <img src={med.image_url} alt={med.name} className="w-12 h-12 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                      <Pill className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{med.name}</p>
-                    <p className="text-sm text-muted-foreground">{med.category || 'Uncategorized'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">${Number(med.price).toFixed(2)}</p>
-                    <Badge variant="secondary" className="text-xs">{med.stock_quantity} left</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">No medicines found</p>
-            )}
-          </div>
-        </div>
+      <div className="grid lg:grid-cols-1 gap-6">
 
         {/* Right: Receipt */}
         <Card className="h-fit sticky top-4">
@@ -246,6 +177,7 @@ const StaffSale = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
             {/* Customer Info */}
             <div className="space-y-3">
               <div>
@@ -253,28 +185,71 @@ const StaffSale = () => {
                   <User className="w-4 h-4" />
                   Customer Name
                 </Label>
-                <Input 
+                <Input
                   placeholder="Enter customer name"
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                 />
               </div>
+
+              {/* Medicine Search */}
+              <div className="relative">
+                <Label className="flex items-center gap-2 mb-2">
+                  <Pill className="w-4 h-4" />
+                  Search Medicine
+                </Label>
+
+                <Input
+                  placeholder="Start typing medicine name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+
+                {search && filteredMedicines.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-60 overflow-y-auto">
+                    {filteredMedicines.map(med => (
+                      <button
+                        key={med.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-muted flex justify-between items-center"
+                        onClick={() => {
+                          addToReceipt(med);
+                          setSearch('');
+                        }}
+                      >
+                        <span>{med.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          ${Number(med.price).toFixed(2)} · {med.stock_quantity} left
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {search && filteredMedicines.length === 0 && (
+                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
+                    No medicines found
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Method */}
               <div>
                 <Label className="flex items-center gap-2 mb-2">
                   <CreditCard className="w-4 h-4" />
                   Payment Method
                 </Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="evc_plus">EVC Plus</SelectItem>
-                    <SelectItem value="debt">Debt</SelectItem>
-                    <SelectItem value="bank_card">Bank Card</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={paymentMethod}
+                  onChange={e => setPaymentMethod(e.target.value)}
+                  className="w-full rounded px-3 py-2 bg-input text-foreground"
+                >
+                  <option value="">Select payment method</option>
+                  <option value="cash">Cash</option>
+                  <option value="evc_plus">EVC Plus</option>
+                  <option value="debt">Debt</option>
+                  <option value="bank_card">Bank Card</option>
+                </select>
               </div>
             </div>
 
@@ -283,7 +258,7 @@ const StaffSale = () => {
               <p className="text-sm font-medium mb-3">Items ({receiptItems.length})</p>
               {receiptItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  Click on medicines to add them
+                  Add medicines to the receipt
                 </p>
               ) : (
                 <div className="space-y-3 max-h-[40vh] overflow-y-auto">
@@ -296,27 +271,27 @@ const StaffSale = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
+                        <Button
+                          variant="outline"
+                          size="icon"
                           className="h-7 w-7"
                           onClick={() => updateQuantity(item.medicine_id, -1)}
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
                         <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
+                        <Button
+                          variant="outline"
+                          size="icon"
                           className="h-7 w-7"
                           onClick={() => updateQuantity(item.medicine_id, 1)}
                           disabled={item.quantity >= item.stock_available}
                         >
                           <Plus className="w-3 h-3" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7 text-destructive hover:text-destructive"
                           onClick={() => removeItem(item.medicine_id)}
                         >
@@ -330,21 +305,29 @@ const StaffSale = () => {
             </div>
 
             {/* Total */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-medium">Total</span>
-                <span className="text-2xl font-bold">${totalAmount.toFixed(2)}</span>
-              </div>
-              <Button 
-                onClick={handleConfirmSale} 
-                className="w-full" 
-                size="lg"
-                disabled={isSubmitting || receiptItems.length === 0}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {isSubmitting ? 'Processing...' : 'Confirm Sale'}
-              </Button>
-            </div>
+            {/* Total */}
+<div className="border-t pt-4">
+  <div className="flex justify-between items-center mb-4">
+    <span className="text-lg font-medium">Total</span>
+    <span
+      className={`text-2xl font-bold ${
+        paymentMethod === 'debt' ? 'text-destructive' : ''
+      }`}
+    >
+      ${totalAmount.toFixed(2)}
+    </span>
+  </div>
+  <Button 
+    onClick={handleConfirmSale} 
+    className="w-full" 
+    size="lg"
+    disabled={isSubmitting || receiptItems.length === 0}
+  >
+    <ShoppingCart className="w-4 h-4 mr-2" />
+    {isSubmitting ? 'Processing...' : 'Confirm Sale'}
+  </Button>
+</div>
+
           </CardContent>
         </Card>
       </div>

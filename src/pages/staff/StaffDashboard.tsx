@@ -33,14 +33,14 @@ const StaffDashboard = () => {
     // Fetch receipts for today
     const { data: todayReceipts } = await supabase
       .from('receipts')
-      .select('total_amount, receipt_items(profit)')
+      .select('total_amount, receipt_items(quantity, profit)')
       .eq('pharmacy_id', pharmacyId)
       .gte('created_at', today);
 
     // Fetch receipts for this month
     const { data: monthlyReceipts } = await supabase
       .from('receipts')
-      .select('total_amount, receipt_items(profit)')
+      .select('total_amount, receipt_items(quantity, profit)')
       .eq('pharmacy_id', pharmacyId)
       .gte('created_at', startOfMonth);
 
@@ -55,11 +55,11 @@ const StaffDashboard = () => {
     // Calculate totals
     const todaySales = todayReceipts?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
     const todayProfit = todayReceipts?.reduce((sum, r) => 
-      sum + (r.receipt_items?.reduce((p: number, item: any) => p + Number(item.profit || 0), 0) || 0), 0) || 0;
+      sum + (r.receipt_items?.reduce((p: number, item: any) => p + (Number(item.profit || 0) * item.quantity), 0) || 0), 0) || 0;
 
     const monthlySales = monthlyReceipts?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
     const monthlyProfit = monthlyReceipts?.reduce((sum, r) => 
-      sum + (r.receipt_items?.reduce((p: number, item: any) => p + Number(item.profit || 0), 0) || 0), 0) || 0;
+      sum + (r.receipt_items?.reduce((p: number, item: any) => p + (Number(item.profit || 0) * item.quantity), 0) || 0), 0) || 0;
 
     setStats({
       totalMedicines: medicines?.length || 0,
@@ -78,7 +78,7 @@ const StaffDashboard = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Staff Dashboard" description="Your pharmacy overview" />
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Medicines" value={stats.totalMedicines} icon={Pill} variant="primary" />
         <StatCard title="Low Stock" value={stats.lowStock} icon={TrendingDown} variant="destructive" />
         <StatCard title="Expiring Soon" value={stats.expiringSoon} icon={AlertTriangle} variant="warning" />
@@ -93,12 +93,12 @@ const StaffDashboard = () => {
           {recentReceipts.length === 0 ? <p className="text-muted-foreground text-center py-4">No receipts yet</p> : (
             <div className="space-y-2">
               {recentReceipts.map((r: any) => {
-                const totalProfit = r.receipt_items?.reduce((sum: number, item: any) => sum + Number(item.profit || 0), 0) || 0;
+                const totalProfit = r.receipt_items?.reduce((sum: number, item: any) => sum + (Number(item.profit || 0) * item.quantity), 0) || 0;
                 const itemCount = r.receipt_items?.length || 0;
                 return (
                   <div key={r.id} className="flex justify-between p-3 rounded-lg bg-muted/50">
                     <div>
-                      <p className="font-medium">{r.customer_name}</p>
+                      <p className="font-medium">{r.customer_name || 'Anonymous'}</p>
                       <p className="text-sm text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
                     </div>
                     <div className="text-right">

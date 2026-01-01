@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { History, Download, ChevronDown, ChevronRight, Receipt } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatDateTime } from '@/lib/exportUtils';
+import { Label } from '@/components/ui/label';
 
 interface ReceiptItem {
   id: string;
@@ -36,8 +37,11 @@ const StaffHistory = () => {
   const { toast } = useToast();
   const [receipts, setReceipts] = useState<ReceiptData[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [paymentFilter, setPaymentFilter] = useState<string>('');
 
-  useEffect(() => { if (pharmacyId) fetchReceipts(); }, [pharmacyId]);
+  useEffect(() => {
+    if (pharmacyId) fetchReceipts();
+  }, [pharmacyId]);
 
   const fetchReceipts = async () => {
     const { data } = await supabase
@@ -62,6 +66,7 @@ const StaffHistory = () => {
       .eq('pharmacy_id', pharmacyId)
       .order('created_at', { ascending: false })
       .limit(100);
+
     setReceipts((data as ReceiptData[]) || []);
   };
 
@@ -102,6 +107,17 @@ const StaffHistory = () => {
     return labels[method] || method;
   };
 
+  // Apply payment method filter
+  const filteredReceipts = paymentFilter
+    ? receipts.filter(r => r.payment_method === paymentFilter)
+    : receipts;
+
+  // Calculate sum for selected payment type
+  const paymentSum =
+    paymentFilter && paymentFilter !== ''
+      ? filteredReceipts.reduce((sum, r) => sum + r.total_amount, 0)
+      : 0;
+
   return (
     <div className="space-y-8">
       <PageHeader title="Sales History" description="View all recorded receipts">
@@ -109,18 +125,41 @@ const StaffHistory = () => {
           <Download className="w-4 h-4 mr-2" />Export
         </Button>
       </PageHeader>
+
+      {/* Payment Method Filter */}
+      <div className="flex items-center gap-4 mb-4">
+        <Label>Filter by Payment Method:</Label>
+        <select
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value)}
+          className="rounded px-3 py-2 bg-input text-foreground"
+        >
+          <option value="">All</option>
+          <option value="cash">Cash</option>
+          <option value="evc_plus">EVC Plus</option>
+          <option value="debt">Debt</option>
+          <option value="bank_card">Bank Card</option>
+        </select>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />Sales Records
           </CardTitle>
+            {/* Show payment sum only if a specific payment is selected */}
+              {paymentFilter && paymentFilter !== '' && (
+                <div className="mt-4 text-right text-lg font-bold">
+                  Total {formatPaymentMethod(paymentFilter)}: ${paymentSum.toFixed(2)}
+                </div>
+              )}
         </CardHeader>
         <CardContent>
-          {receipts.length === 0 ? (
+          {filteredReceipts.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No receipts yet</p>
           ) : (
             <div className="space-y-3">
-              {receipts.map(receipt => (
+              {filteredReceipts.map(receipt => (
                 <Collapsible 
                   key={receipt.id} 
                   open={expandedId === receipt.id}
@@ -158,7 +197,6 @@ const StaffHistory = () => {
                             <TableHead className="text-right">Qty</TableHead>
                             <TableHead className="text-right">Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
-                            <TableHead className="text-right">Profit</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -168,9 +206,6 @@ const StaffHistory = () => {
                               <TableCell className="text-right">{item.quantity}</TableCell>
                               <TableCell className="text-right">${Number(item.selling_price).toFixed(2)}</TableCell>
                               <TableCell className="text-right font-medium">${Number(item.total).toFixed(2)}</TableCell>
-                              <TableCell className="text-right text-green-600 dark:text-green-400">
-                                +${Number(item.profit).toFixed(2)}
-                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
