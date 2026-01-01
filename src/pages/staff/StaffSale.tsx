@@ -170,6 +170,31 @@ const StaffSale = () => {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Left: Medicine Selection */}
         <div className="space-y-4">
+          <div>
+            <Label className="flex items-center gap-2 mb-2">
+              <Pill className="w-4 h-4" />
+              Select Medicine
+            </Label>
+            <Select onValueChange={(value) => {
+              const med = medicines.find(m => m.id === value);
+              if (med) addToReceipt(med);
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a medicine to add..." />
+              </SelectTrigger>
+              <SelectContent>
+                {medicines.filter(m => !receiptItems.find(item => item.medicine_id === m.id && item.quantity >= m.stock_quantity)).map(med => (
+                  <SelectItem key={med.id} value={med.id}>
+                    <div className="flex items-center justify-between w-full gap-4">
+                      <span>{med.name}</span>
+                      <span className="text-muted-foreground text-sm">${Number(med.price).toFixed(2)} ({med.stock_quantity} left)</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
@@ -180,7 +205,7 @@ const StaffSale = () => {
             />
           </div>
           
-          <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="grid gap-3 max-h-[50vh] overflow-y-auto pr-2">
             {filtered.map(med => (
               <Card 
                 key={med.id} 
