@@ -201,16 +201,6 @@ const StaffMedicines = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Image</Label>
-                  <ImageUpload
-                    currentImageUrl={form.image_url}
-                    onImageUploaded={(url) =>
-                      setForm({ ...form, image_url: url })
-                    }
-                    onImageRemoved={() => setForm({ ...form, image_url: "" })}
-                  />
-                </div>
-                <div>
                   <Label>Name</Label>
                   <Input
                     value={form.name}
@@ -324,17 +314,6 @@ const StaffMedicines = () => {
         {filtered.map((med) => (
           <Card key={med.id} className="card-hover overflow-hidden">
             <CardContent className="p-0">
-              {med.image_url ? (
-                <img
-                  src={med.image_url}
-                  alt={med.name}
-                  className="w-full h-32 object-cover"
-                />
-              ) : (
-                <div className="w-full h-32 bg-muted flex items-center justify-center">
-                  <Pill className="w-10 h-10 text-muted-foreground" />
-                </div>
-              )}
               <div className="p-4">
                 <div className="flex justify-between items-start">
                   <div>
