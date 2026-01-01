@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/ui/page-header';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { ShoppingCart, Minus, Plus, Trash2, Receipt, User, CreditCard, Pill } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, Receipt, User, CreditCard, Pill, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ReceiptItem {
@@ -28,6 +28,9 @@ const StaffSale = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ref for print area
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (pharmacyId) fetchMedicines();
@@ -85,34 +88,63 @@ const StaffSale = () => {
 
   const totalAmount = receiptItems.reduce((sum, item) => sum + (item.quantity * item.selling_price), 0);
 
-const handleConfirmSale = async () => {
-  if (!paymentMethod) {
-    toast({ title: 'Error', description: 'Please select payment method', variant: 'destructive' });
-    return;
-  }
-  if (receiptItems.length === 0) {
-    toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
-    return;
-  }
+  // PRINT FUNCTION
+  const printReceipt = () => {
+    if (!printRef.current) return;
+    const printWindow = window.open('', '', 'width=300,height=600');
+    if (!printWindow) return;
 
-  setIsSubmitting(true);
-  try {
-    // Create receipt
-    const { data: receipt, error: receiptError } = await supabase
-      .from('receipts')
-      .insert({
-        pharmacy_id: pharmacyId,
-        staff_id: user?.id,
-        customer_name: customerName.trim() || null, // optional
-        payment_method: paymentMethod,
-        total_amount: totalAmount
-      })
-      .select()
-      .single();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt</title>
+          <style>
+            body { font-family: monospace; font-size: 12px; width: 280px; padding: 10px; }
+            h2, p { text-align: center; margin: 2px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+            th, td { text-align: left; padding: 2px 0; }
+            .total { font-weight: bold; margin-top: 5px; }
+            hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+          </style>
+        </head>
+        <body>
+          ${printRef.current.innerHTML}
+        </body>
+      </html>
+    `);
 
-    if (receiptError) throw receiptError;
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
 
-    // ...rest of code remains unchanged
+  const handleConfirmSale = async () => {
+    if (!paymentMethod) {
+      toast({ title: 'Error', description: 'Please select payment method', variant: 'destructive' });
+      return;
+    }
+    if (receiptItems.length === 0) {
+      toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Create receipt
+      const { data: receipt, error: receiptError } = await supabase
+        .from('receipts')
+        .insert({
+          pharmacy_id: pharmacyId,
+          staff_id: user?.id,
+          customer_name: customerName.trim() || null, // optional
+          payment_method: paymentMethod,
+          total_amount: totalAmount
+        })
+        .select()
+        .single();
+
+      if (receiptError) throw receiptError;
 
       // Create receipt items
       const itemsToInsert = receiptItems.map(item => ({
@@ -145,7 +177,6 @@ const handleConfirmSale = async () => {
         description: `Receipt created for ${customerName} - Total: $${totalAmount.toFixed(2)}`
       });
 
-      // Reset form
       setCustomerName('');
       setPaymentMethod('');
       setReceiptItems([]);
@@ -305,31 +336,60 @@ const handleConfirmSale = async () => {
             </div>
 
             {/* Total */}
-            {/* Total */}
-<div className="border-t pt-4">
-  <div className="flex justify-between items-center mb-4">
-    <span className="text-lg font-medium">Total</span>
-    <span
-      className={`text-2xl font-bold ${
-        paymentMethod === 'debt' ? 'text-destructive' : ''
-      }`}
-    >
-      ${totalAmount.toFixed(2)}
-    </span>
-  </div>
-  <Button 
-    onClick={handleConfirmSale} 
-    className="w-full" 
-    size="lg"
-    disabled={isSubmitting || receiptItems.length === 0}
-  >
-    <ShoppingCart className="w-4 h-4 mr-2" />
-    {isSubmitting ? 'Processing...' : 'Confirm Sale'}
-  </Button>
-</div>
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-medium">Total</span>
+                <span className={`text-2xl font-bold ${paymentMethod === 'debt' ? 'text-destructive' : ''}`}>
+                  ${totalAmount.toFixed(2)}
+                </span>
+              </div>
+              <Button 
+                onClick={handleConfirmSale} 
+                className="w-full" 
+                size="lg"
+                disabled={isSubmitting || receiptItems.length === 0}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                {isSubmitting ? 'Processing...' : 'Confirm Sale'}
+              </Button>
 
+              {receiptItems.length > 0 && (
+                <Button 
+                  onClick={printReceipt} 
+                  variant="outline" 
+                  className="w-full mt-2"
+                >
+                  <Printer className="w-4 h-4 mr-2" /> Print Receipt
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Hidden print area */}
+      <div ref={printRef} style={{ display: 'none' }}>
+        <h2 className='text-4xl'>Livestock Agro Drug Company</h2>
+        <p className='text-xl'>Email: ladcokismaayo@gmail.com</p>
+        <p className='text-xl'>Tel: +252614974959/+25261877003/+252771629562</p>
+        <p className='text-xl'>Location: Umbultoria, Kismayo, Somalia</p>
+        <hr />
+        <p className='font-bold'>Customer: {customerName || 'Walk-in'}</p>
+        <p className='text-2xl'>Payment: {paymentMethod}</p>
+        <hr />
+        <table>
+          <tbody>
+            {receiptItems.map(item => (
+              <tr key={item.medicine_id}>
+                <td>{item.name}</td>
+                <td>{item.quantity}</td>
+                <td>${(item.quantity * item.selling_price).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <hr />
+        <p className="total">Total: ${totalAmount.toFixed(2)}</p>
       </div>
     </div>
   );
