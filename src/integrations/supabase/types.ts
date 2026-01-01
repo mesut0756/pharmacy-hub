@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       medicines: {
         Row: {
+          buying_price: number | null
           category: string | null
           created_at: string
           created_by: string | null
@@ -27,10 +28,12 @@ export type Database = {
           name: string
           pharmacy_id: string
           price: number
+          profit: number | null
           stock_quantity: number
           updated_at: string
         }
         Insert: {
+          buying_price?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -42,10 +45,12 @@ export type Database = {
           name: string
           pharmacy_id: string
           price?: number
+          profit?: number | null
           stock_quantity?: number
           updated_at?: string
         }
         Update: {
+          buying_price?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -57,6 +62,7 @@ export type Database = {
           name?: string
           pharmacy_id?: string
           price?: number
+          profit?: number | null
           stock_quantity?: number
           updated_at?: string
         }
@@ -212,6 +218,92 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      receipt_items: {
+        Row: {
+          buying_price: number
+          id: string
+          medicine_id: string
+          profit: number | null
+          quantity: number
+          receipt_id: string
+          selling_price: number
+          total: number | null
+        }
+        Insert: {
+          buying_price?: number
+          id?: string
+          medicine_id: string
+          profit?: number | null
+          quantity: number
+          receipt_id: string
+          selling_price: number
+          total?: number | null
+        }
+        Update: {
+          buying_price?: number
+          id?: string
+          medicine_id?: string
+          profit?: number | null
+          quantity?: number
+          receipt_id?: string
+          selling_price?: number
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_items_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          created_at: string
+          customer_name: string
+          id: string
+          payment_method: string
+          pharmacy_id: string
+          staff_id: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          id?: string
+          payment_method: string
+          pharmacy_id: string
+          staff_id: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          payment_method?: string
+          pharmacy_id?: string
+          staff_id?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sales: {
         Row: {
