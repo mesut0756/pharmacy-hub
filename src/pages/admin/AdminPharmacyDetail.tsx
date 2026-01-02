@@ -26,12 +26,13 @@ interface PharmacyDetail {
   email: string | null;
 }
 
-interface RecentSale {
+interface RecentReceipt {
   id: string;
-  medicine_name: string;
-  quantity: number;
+  customer_name: string;
+  payment_method: string;
   total_amount: number;
-  sale_date: string;
+  created_at: string;
+  profit: number;
 }
 
 const AdminPharmacyDetail = () => {
@@ -45,7 +46,7 @@ const AdminPharmacyDetail = () => {
     totalYearlySales: 0,
   });
   const [salesData, setSalesData] = useState<{ month: string; total: number }[]>([]);
-  const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
+  const [recentReceipts, setRecentReceipts] = useState<RecentReceipt[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
 
@@ -88,49 +89,69 @@ const AdminPharmacyDetail = () => {
       m.stock_quantity <= m.low_stock_threshold
     ).length || 0;
 
-    // Fetch yearly sales
-    const startOfYear = `${selectedYear}-01-01`;
-    const endOfYear = `${selectedYear}-12-31`;
+    // Fetch yearly receipts
+    const startOfYear = `${selectedYear}-01-01T00:00:00`;
+    const endOfYear = `${selectedYear}-12-31T23:59:59`;
 
-    const { data: salesRes } = await supabase
-      .from('sales')
-      .select('*')
+    const { data: receiptsRes } = await supabase
+      .from('receipts')
+      .select('id, created_at, total_amount, customer_name, payment_method')
       .eq('pharmacy_id', id)
-      .gte('sale_date', startOfYear)
-      .lte('sale_date', endOfYear)
-      .order('sale_date', { ascending: false });
+      .gte('created_at', startOfYear)
+      .lte('created_at', endOfYear)
+      .order('created_at', { ascending: false });
+
+    // Get receipt items for profit calculation
+    const receiptIds = receiptsRes?.map(r => r.id) || [];
+    let totalProfit = 0;
+    
+    if (receiptIds.length > 0) {
+      const { data: itemsData } = await supabase
+        .from('receipt_items')
+        .select('receipt_id, profit')
+        .in('receipt_id', receiptIds);
+      
+      totalProfit = itemsData?.reduce((sum, item) => sum + Number(item.profit || 0), 0) || 0;
+    }
 
     // Process sales data by month
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlySales = months.map((month, index) => {
-      const monthSales = salesRes?.filter((sale) => {
-        const saleMonth = new Date(sale.sale_date).getMonth();
-        return saleMonth === index;
-      }).reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
+      const monthSales = receiptsRes?.filter((receipt) => {
+        const receiptMonth = new Date(receipt.created_at).getMonth();
+        return receiptMonth === index;
+      }).reduce((sum, receipt) => sum + Number(receipt.total_amount), 0) || 0;
 
       return { month, total: monthSales };
     });
 
     const totalYearlySales = monthlySales.reduce((sum, m) => sum + m.total, 0);
 
-    // Fetch recent sales with medicine names
-    const recentSalesData: RecentSale[] = [];
-    if (salesRes && salesRes.length > 0) {
-      for (const sale of salesRes.slice(0, 10)) {
-        const { data: medicine } = await supabase
-          .from('medicines')
-          .select('name')
-          .eq('id', sale.medicine_id)
-          .single();
+    // Process recent receipts with profit
+    const recentReceiptsData: RecentReceipt[] = (receiptsRes || []).slice(0, 10).map(receipt => {
+      const receiptProfit = receiptIds.length > 0 ? 0 : 0; // Will be calculated below
+      return {
+        id: receipt.id,
+        customer_name: receipt.customer_name,
+        payment_method: receipt.payment_method,
+        total_amount: Number(receipt.total_amount),
+        created_at: receipt.created_at,
+        profit: 0,
+      };
+    });
 
-        recentSalesData.push({
-          id: sale.id,
-          medicine_name: medicine?.name || 'Unknown',
-          quantity: sale.quantity,
-          total_amount: Number(sale.total_amount),
-          sale_date: sale.sale_date,
-        });
-      }
+    // Calculate profit for each recent receipt
+    if (recentReceiptsData.length > 0) {
+      const recentIds = recentReceiptsData.map(r => r.id);
+      const { data: recentItems } = await supabase
+        .from('receipt_items')
+        .select('receipt_id, profit')
+        .in('receipt_id', recentIds);
+      
+      recentReceiptsData.forEach(receipt => {
+        receipt.profit = recentItems?.filter(i => i.receipt_id === receipt.id)
+          .reduce((sum, i) => sum + Number(i.profit || 0), 0) || 0;
+      });
     }
 
     setStats({
@@ -140,7 +161,7 @@ const AdminPharmacyDetail = () => {
       totalYearlySales,
     });
     setSalesData(monthlySales);
-    setRecentSales(recentSalesData);
+    setRecentReceipts(recentReceiptsData);
     setLoading(false);
   };
 
@@ -248,22 +269,22 @@ const AdminPharmacyDetail = () => {
         availableYears={[2023, 2024, 2025]}
       />
 
-      {/* Recent Sales */}
+      {/* Recent Receipts */}
       <Card className="animate-slide-up">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clock className="w-5 h-5 text-primary" />
-            Recent Sales
+            Recent Receipts
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {recentSales.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No sales recorded yet</p>
+          {recentReceipts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No receipts recorded yet</p>
           ) : (
             <div className="space-y-3">
-              {recentSales.map((sale) => (
+              {recentReceipts.map((receipt) => (
                 <div
-                  key={sale.id}
+                  key={receipt.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -271,15 +292,16 @@ const AdminPharmacyDetail = () => {
                       <Package className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{sale.medicine_name}</p>
+                      <p className="font-medium">{receipt.customer_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(sale.sale_date)}
+                        {formatDate(receipt.created_at)}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <Badge variant="secondary">×{sale.quantity}</Badge>
-                    <p className="font-semibold mt-1">{formatCurrency(sale.total_amount)}</p>
+                    <Badge variant="secondary">{receipt.payment_method.replace('_', ' ')}</Badge>
+                    <p className="font-semibold mt-1">{formatCurrency(receipt.total_amount)}</p>
+                    <p className="text-xs text-green-600">Profit: {formatCurrency(receipt.profit)}</p>
                   </div>
                 </div>
               ))}
