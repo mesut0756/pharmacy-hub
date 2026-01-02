@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/ui/page-header';
 import { YearlySalesChart } from '@/components/charts/YearlySalesChart';
@@ -6,11 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileBarChart, Receipt, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileBarChart, Receipt, Download, ChevronDown, ChevronUp, Printer } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatCurrency, formatDateTime } from '@/lib/exportUtils';
+
+interface PharmacyInfo {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  logo_url: string | null;
+}
 
 interface ReceiptRecord {
   id: string;
@@ -26,6 +34,10 @@ interface ReceiptRecord {
 interface Pharmacy {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logo_url?: string;
 }
 
 const AdminSales = () => {
@@ -38,6 +50,7 @@ const AdminSales = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPharmacy, setSelectedPharmacy] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchPharmacies();
@@ -48,7 +61,7 @@ const AdminSales = () => {
   }, [selectedYear, selectedPharmacy]);
 
   const fetchPharmacies = async () => {
-    const { data } = await supabase.from('pharmacies').select('id, name');
+    const { data } = await supabase.from('pharmacies').select('id, name, email, phone, address, logo_url');
     if (data) {
       setPharmacies(data);
     }
@@ -166,6 +179,113 @@ const AdminSales = () => {
     return variants[method] || 'default';
   };
 
+  const printReceipt = async (receipt: ReceiptRecord) => {
+    // Get pharmacy info
+    const pharmacy = pharmacies.find(p => p.name === receipt.pharmacy_name);
+    
+    // Make sure items are loaded
+    if (!receiptItems[receipt.id]) {
+      await fetchReceiptItems(receipt.id);
+    }
+    
+    const items = receiptItems[receipt.id] || [];
+    
+    const printWindow = window.open('', '', 'width=400,height=600');
+    if (!printWindow) {
+      toast({ title: 'Error', description: 'Could not open print window', variant: 'destructive' });
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt - ${receipt.customer_name}</title>
+          <style>
+            body { 
+              font-family: 'Courier New', monospace; 
+              font-size: 12px; 
+              width: 300px; 
+              padding: 15px; 
+              margin: 0 auto;
+            }
+            .header { text-align: center; margin-bottom: 15px; }
+            .header h2 { margin: 0 0 5px 0; font-size: 16px; }
+            .header p { margin: 2px 0; font-size: 11px; color: #555; }
+            .divider { border-top: 1px dashed #000; margin: 10px 0; }
+            .info { margin-bottom: 10px; }
+            .info p { margin: 3px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            th { text-align: left; border-bottom: 1px solid #000; padding: 5px 0; }
+            td { padding: 4px 0; }
+            .qty { text-align: center; width: 40px; }
+            .price { text-align: right; width: 70px; }
+            .total-row { font-weight: bold; border-top: 1px solid #000; }
+            .footer { text-align: center; margin-top: 15px; font-size: 11px; color: #555; }
+            @media print {
+              body { width: 100%; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>${pharmacy?.name || receipt.pharmacy_name}</h2>
+            ${pharmacy?.email ? `<p>Email: ${pharmacy.email}</p>` : ''}
+            ${pharmacy?.phone ? `<p>Tel: ${pharmacy.phone}</p>` : ''}
+            ${pharmacy?.address ? `<p>${pharmacy.address}</p>` : ''}
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="info">
+            <p><strong>Date:</strong> ${formatDateTime(receipt.created_at)}</p>
+            <p><strong>Customer:</strong> ${receipt.customer_name || 'Walk-in'}</p>
+            <p><strong>Staff:</strong> ${receipt.staff_name}</p>
+            <p><strong>Payment:</strong> ${getPaymentMethodLabel(receipt.payment_method)}</p>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th class="qty">Qty</th>
+                <th class="price">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td>${item.medicines?.name || 'Unknown'}</td>
+                  <td class="qty">${item.quantity}</td>
+                  <td class="price">${formatCurrency(item.total)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="2">TOTAL</td>
+                <td class="price">${formatCurrency(receipt.total_amount)}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="divider"></div>
+          
+          <div class="footer">
+            <p>Thank you for your purchase!</p>
+            <p>Receipt ID: ${receipt.id.slice(0, 8)}</p>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   const handleExport = () => {
     const exportData = receipts.map(r => ({
       date: formatDateTime(r.created_at),
@@ -271,6 +391,17 @@ const AdminSales = () => {
                             <p className="text-xs text-green-600">Profit: {formatCurrency(receipt.profit)}</p>
                             <p className="text-xs text-muted-foreground">{formatDateTime(receipt.created_at)}</p>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              printReceipt(receipt);
+                            }}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
                           {expandedReceipts.has(receipt.id) ? (
                             <ChevronUp className="w-5 h-5 text-muted-foreground" />
                           ) : (
