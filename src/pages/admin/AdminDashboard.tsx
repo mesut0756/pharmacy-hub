@@ -72,26 +72,25 @@ const AdminDashboard = () => {
     // Fetch low stock medicines
     const { data: lowStockData } = await supabase
       .from('medicines')
-      .select('id, name, stock_quantity, low_stock_threshold, pharmacy_id, pharmacies(name)')
-      .filter('stock_quantity', 'lte', 'low_stock_threshold');
+      .select('id, name, stock_quantity, low_stock_threshold, pharmacy_id, pharmacies(name)');
 
-    // Fetch yearly sales
-    const startOfYear = `${selectedYear}-01-01`;
-    const endOfYear = `${selectedYear}-12-31`;
+    // Fetch yearly sales from receipts table
+    const startOfYear = `${selectedYear}-01-01T00:00:00`;
+    const endOfYear = `${selectedYear}-12-31T23:59:59`;
     
     const { data: salesRes } = await supabase
-      .from('sales')
-      .select('sale_date, total_amount')
-      .gte('sale_date', startOfYear)
-      .lte('sale_date', endOfYear);
+      .from('receipts')
+      .select('created_at, total_amount')
+      .gte('created_at', startOfYear)
+      .lte('created_at', endOfYear);
 
     // Process sales data by month
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlySales = months.map((month, index) => {
-      const monthSales = salesRes?.filter(sale => {
-        const saleMonth = new Date(sale.sale_date).getMonth();
-        return saleMonth === index;
-      }).reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
+      const monthSales = salesRes?.filter(receipt => {
+        const receiptMonth = new Date(receipt.created_at).getMonth();
+        return receiptMonth === index;
+      }).reduce((sum, receipt) => sum + Number(receipt.total_amount), 0) || 0;
       
       return { month, total: monthSales };
     });
