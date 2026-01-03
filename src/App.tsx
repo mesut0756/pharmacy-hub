@@ -9,7 +9,8 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPharmacies from "./pages/admin/AdminPharmacies";
 import AdminPharmacyDetail from "./pages/admin/AdminPharmacyDetail";
-import AdminSales from "./pages/admin/AdminSales";
+import AdminMedicines from "./pages/admin/AdminMedicines";
+import AdminProfitAnalytics from "./pages/admin/AdminProfitAnalytics";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReceipts from "./pages/admin/AdminReceipts";
 import AdminSettings from "./pages/admin/AdminSettings";
@@ -36,7 +37,8 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="pharmacies" element={<AdminPharmacies />} />
               <Route path="pharmacies/:id" element={<AdminPharmacyDetail />} />
-              <Route path="sales" element={<AdminSales />} />
+              <Route path="medicines" element={<AdminMedicines />} />
+              <Route path="profit" element={<AdminProfitAnalytics />} />
               <Route path="receipts" element={<AdminReceipts />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="settings" element={<AdminSettings />} />
