@@ -30,7 +30,8 @@ interface NavItem {
 const adminNavItems: NavItem[] = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
   { title: 'Pharmacies', url: '/admin/pharmacies', icon: Building2 },
-  { title: 'Sales Reports', url: '/admin/sales', icon: FileBarChart },
+  { title: 'Medicines', url: '/admin/medicines', icon: Pill },
+  { title: 'Profit Analytics', url: '/admin/profit', icon: FileBarChart },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
