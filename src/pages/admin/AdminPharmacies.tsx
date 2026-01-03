@@ -56,7 +56,7 @@ const AdminPharmacies = () => {
 
     const enrichedPharmacies: PharmacyData[] = await Promise.all(
       pharmacyData.map(async (pharmacy) => {
-        const [staffRes, medicineRes, salesRes] = await Promise.all([
+        const [staffRes, medicineRes, receiptsRes] = await Promise.all([
           supabase
             .from('pharmacy_staff')
             .select('id', { count: 'exact' })
@@ -66,14 +66,14 @@ const AdminPharmacies = () => {
             .select('id', { count: 'exact' })
             .eq('pharmacy_id', pharmacy.id),
           supabase
-            .from('sales')
+            .from('receipts')
             .select('total_amount')
             .eq('pharmacy_id', pharmacy.id)
-            .gte('sale_date', startOfYear)
-            .lte('sale_date', endOfYear),
+            .gte('created_at', startOfYear)
+            .lte('created_at', endOfYear),
         ]);
 
-        const yearlySales = salesRes.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+        const yearlySales = receiptsRes.data?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
 
         return {
           id: pharmacy.id,
