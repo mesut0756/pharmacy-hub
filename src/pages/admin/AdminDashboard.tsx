@@ -192,7 +192,7 @@ const AdminDashboard = () => {
         title="Overall Yearly Sales"
         year={selectedYear}
         onYearChange={setSelectedYear}
-        availableYears={[2023, 2024, 2025]}
+        availableYears={[2026, 2027, 2028]}
       />
 
       {/* Alerts Grid */}
