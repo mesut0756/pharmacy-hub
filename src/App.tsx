@@ -13,6 +13,7 @@ import AdminMedicines from "./pages/admin/AdminMedicines";
 import AdminProfitAnalytics from "./pages/admin/AdminProfitAnalytics";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReceipts from "./pages/admin/AdminReceipts";
+import AdminDebts from "./pages/admin/AdminDebts";
 import AdminSettings from "./pages/admin/AdminSettings";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffMedicines from "./pages/staff/StaffMedicines";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="medicines" element={<AdminMedicines />} />
               <Route path="profit" element={<AdminProfitAnalytics />} />
               <Route path="receipts" element={<AdminReceipts />} />
+              <Route path="debts" element={<AdminDebts />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>

@@ -14,6 +14,7 @@ import {
   X,
   Moon,
   Sun,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -33,6 +34,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Medicines', url: '/admin/medicines', icon: Pill },
   { title: 'Profit Analytics', url: '/admin/profit', icon: FileBarChart },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
+  { title: 'Debts', url: '/admin/debts', icon: CreditCard },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
