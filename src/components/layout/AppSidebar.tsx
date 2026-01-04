@@ -34,7 +34,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
   { title: 'Pharmacies', url: '/admin/pharmacies', icon: Building2 },
   { title: 'Medicines', url: '/admin/medicines', icon: Pill },
-  { title: 'Profit Analytics', url: '/admin/profit', icon: FileBarChart },
+  // { title: 'Profit Analytics', url: '/admin/profit', icon: FileBarChart },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
   { title: 'Debts', url: '/admin/debts', icon: CreditCard },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
