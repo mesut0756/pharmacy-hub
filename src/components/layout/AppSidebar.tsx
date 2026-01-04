@@ -15,6 +15,8 @@ import {
   Moon,
   Sun,
   CreditCard,
+  Notebook,
+  ReceiptIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -42,7 +44,8 @@ const adminNavItems: NavItem[] = [
 const staffNavItems: NavItem[] = [
   { title: 'Dashboard', url: '/staff', icon: LayoutDashboard },
   { title: 'Medicines', url: '/staff/medicines', icon: Pill },
-  { title: 'Record Sale', url: '/staff/sale', icon: ShoppingCart },
+  { title: 'Record Sales', url: '/staff/recordsales', icon: Notebook },
+  { title: 'Reciepts', url: '/staff/sale', icon: ReceiptIcon },
   { title: 'Sales History', url: '/staff/history', icon: History },
   { title: 'Notifications', url: '/staff/notifications', icon: Bell },
   { title: 'Profile', url: '/staff/profile', icon: User },

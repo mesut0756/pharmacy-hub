@@ -21,6 +21,7 @@ import StaffSale from "./pages/staff/StaffSale";
 import StaffHistory from "./pages/staff/StaffHistory";
 import StaffNotifications from "./pages/staff/StaffNotifications";
 import StaffProfile from "./pages/staff/StaffProfile";
+import StaffRecordSale from "./pages/staff/StaffRecordSale";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/staff" element={<DashboardLayout requiredRole="staff" />}>
               <Route index element={<StaffDashboard />} />
               <Route path="medicines" element={<StaffMedicines />} />
+              <Route path="recordsales" element={<StaffRecordSale />} />
               <Route path="sale" element={<StaffSale />} />
               <Route path="history" element={<StaffHistory />} />
               <Route path="notifications" element={<StaffNotifications />} />

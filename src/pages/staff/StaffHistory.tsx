@@ -43,6 +43,8 @@ const StaffHistory = () => {
     if (pharmacyId) fetchReceipts();
   }, [pharmacyId]);
 
+  
+
   const fetchReceipts = async () => {
     const { data } = await supabase
       .from('receipts')
