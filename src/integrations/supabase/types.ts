@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_debts: {
+        Row: {
+          amount: number
+          created_at: string
+          expected_payment_date: string | null
+          id: string
+          is_paid: boolean
+          notes: string | null
+          paid_at: string | null
+          person_name: string
+          phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expected_payment_date?: string | null
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          person_name: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expected_payment_date?: string | null
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          person_name?: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medicines: {
         Row: {
           buying_price: number | null
