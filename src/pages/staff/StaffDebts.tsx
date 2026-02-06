@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 const StaffDebts = () => {
-  const { pharmacyId } = useAuth();
+  const { pharmacyId, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -40,7 +40,7 @@ const StaffDebts = () => {
     mutationFn: async (receiptId: string) => {
       const { error } = await supabase
         .from('receipts')
-        .update({ debt_paid_at: new Date().toISOString() })
+        .update({ debt_paid_at: new Date().toISOString(), debt_paid_by: user?.id })
         .eq('id', receiptId);
       if (error) throw error;
     },

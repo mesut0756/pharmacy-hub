@@ -311,6 +311,7 @@ export type Database = {
           created_at: string
           customer_name: string
           debt_paid_at: string | null
+          debt_paid_by: string | null
           id: string
           payment_method: string
           pharmacy_id: string
@@ -321,6 +322,7 @@ export type Database = {
           created_at?: string
           customer_name: string
           debt_paid_at?: string | null
+          debt_paid_by?: string | null
           id?: string
           payment_method: string
           pharmacy_id: string
@@ -331,6 +333,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           debt_paid_at?: string | null
+          debt_paid_by?: string | null
           id?: string
           payment_method?: string
           pharmacy_id?: string
