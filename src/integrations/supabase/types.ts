@@ -310,6 +310,7 @@ export type Database = {
         Row: {
           created_at: string
           customer_name: string
+          debt_paid_at: string | null
           id: string
           payment_method: string
           pharmacy_id: string
@@ -319,6 +320,7 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_name: string
+          debt_paid_at?: string | null
           id?: string
           payment_method: string
           pharmacy_id: string
@@ -328,6 +330,7 @@ export type Database = {
         Update: {
           created_at?: string
           customer_name?: string
+          debt_paid_at?: string | null
           id?: string
           payment_method?: string
           pharmacy_id?: string

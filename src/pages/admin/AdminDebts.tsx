@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Plus, Pencil, Trash2, Search, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface CustomerDebtReceipt {
   id: string;
@@ -37,6 +38,7 @@ interface CustomerDebtReceipt {
   created_at: string;
   pharmacy_name: string;
   staff_name: string;
+  debt_paid_at: string | null;
 }
 
 interface AdminDebt {
@@ -78,7 +80,8 @@ const AdminDebts = () => {
           total_amount,
           created_at,
           pharmacy_id,
-          staff_id
+          staff_id,
+          debt_paid_at
         `)
         .eq("payment_method", "debt")
         .order("created_at", { ascending: false });
@@ -103,7 +106,8 @@ const AdminDebts = () => {
         total_amount: r.total_amount,
         created_at: r.created_at,
         pharmacy_name: pharmacyMap.get(r.pharmacy_id) || "Unknown",
-        staff_name: profileMap.get(r.staff_id) || "Unknown"
+        staff_name: profileMap.get(r.staff_id) || "Unknown",
+        debt_paid_at: r.debt_paid_at,
       })) as CustomerDebtReceipt[];
     },
   });
@@ -254,7 +258,7 @@ const AdminDebts = () => {
   );
 
   // Calculate totals
-  const totalCustomerDebt = customerDebts.reduce((sum, d) => sum + d.total_amount, 0);
+  const totalCustomerDebt = customerDebts.filter(d => !d.debt_paid_at).reduce((sum, d) => sum + d.total_amount, 0);
   const totalAdminDebtUnpaid = adminDebts
     .filter(d => !d.is_paid)
     .reduce((sum, d) => sum + d.amount, 0);
@@ -303,29 +307,37 @@ const AdminDebts = () => {
                       <TableHead>Pharmacy</TableHead>
                       <TableHead>Staff</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingCustomer ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-8">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : filteredCustomerDebts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           No customer debts found
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredCustomerDebts.map((debt) => (
-                        <TableRow key={debt.id}>
+                        <TableRow key={debt.id} className={debt.debt_paid_at ? 'opacity-60' : ''}>
                           <TableCell className="font-medium">{debt.customer_name}</TableCell>
                           <TableCell>${debt.total_amount.toFixed(2)}</TableCell>
                           <TableCell>{debt.pharmacy_name}</TableCell>
                           <TableCell>{debt.staff_name}</TableCell>
                           <TableCell>{format(new Date(debt.created_at), "MMM d, yyyy")}</TableCell>
+                          <TableCell>
+                            {debt.debt_paid_at ? (
+                              <Badge variant="secondary">Paid</Badge>
+                            ) : (
+                              <Badge variant="destructive">Unpaid</Badge>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
