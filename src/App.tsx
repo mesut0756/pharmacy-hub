@@ -22,6 +22,7 @@ import StaffHistory from "./pages/staff/StaffHistory";
 import StaffNotifications from "./pages/staff/StaffNotifications";
 import StaffProfile from "./pages/staff/StaffProfile";
 import StaffRecordSale from "./pages/staff/StaffRecordSale";
+import StaffDebts from "./pages/staff/StaffDebts";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="medicines" element={<StaffMedicines />} />
               <Route path="recordsales" element={<StaffRecordSale />} />
               <Route path="sale" element={<StaffSale />} />
+              <Route path="debts" element={<StaffDebts />} />
               <Route path="history" element={<StaffHistory />} />
               <Route path="notifications" element={<StaffNotifications />} />
               <Route path="profile" element={<StaffProfile />} />
