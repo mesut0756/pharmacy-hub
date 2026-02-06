@@ -39,6 +39,7 @@ interface CustomerDebtReceipt {
   pharmacy_name: string;
   staff_name: string;
   debt_paid_at: string | null;
+  debt_paid_by_name: string | null;
 }
 
 interface AdminDebt {
@@ -81,7 +82,8 @@ const AdminDebts = () => {
           created_at,
           pharmacy_id,
           staff_id,
-          debt_paid_at
+          debt_paid_at,
+          debt_paid_by
         `)
         .eq("payment_method", "debt")
         .order("created_at", { ascending: false });
@@ -91,10 +93,12 @@ const AdminDebts = () => {
       // Fetch pharmacy and staff names
       const pharmacyIds = [...new Set(receipts.map(r => r.pharmacy_id))];
       const staffIds = [...new Set(receipts.map(r => r.staff_id))];
+      const paidByIds = [...new Set(receipts.map(r => r.debt_paid_by).filter(Boolean))];
+      const allProfileIds = [...new Set([...staffIds, ...paidByIds])];
 
       const [pharmaciesRes, profilesRes] = await Promise.all([
         supabase.from("pharmacies").select("id, name").in("id", pharmacyIds),
-        supabase.from("profiles").select("id, full_name").in("id", staffIds)
+        supabase.from("profiles").select("id, full_name").in("id", allProfileIds.length > 0 ? allProfileIds : ['none'])
       ]);
 
       const pharmacyMap = new Map(pharmaciesRes.data?.map(p => [p.id, p.name]) || []);
@@ -108,6 +112,7 @@ const AdminDebts = () => {
         pharmacy_name: pharmacyMap.get(r.pharmacy_id) || "Unknown",
         staff_name: profileMap.get(r.staff_id) || "Unknown",
         debt_paid_at: r.debt_paid_at,
+        debt_paid_by_name: r.debt_paid_by ? (profileMap.get(r.debt_paid_by) || "Unknown") : null,
       })) as CustomerDebtReceipt[];
     },
   });
@@ -308,18 +313,19 @@ const AdminDebts = () => {
                       <TableHead>Staff</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Paid By</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingCustomer ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={8} className="text-center py-8">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : filteredCustomerDebts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           No customer debts found
                         </TableCell>
                       </TableRow>
@@ -333,10 +339,15 @@ const AdminDebts = () => {
                           <TableCell>{format(new Date(debt.created_at), "MMM d, yyyy")}</TableCell>
                           <TableCell>
                             {debt.debt_paid_at ? (
-                              <Badge variant="secondary">Paid</Badge>
+                              <Badge variant="secondary" className="bg-success/10 text-success">
+                                Paid {format(new Date(debt.debt_paid_at), "MMM d, yyyy")}
+                              </Badge>
                             ) : (
                               <Badge variant="destructive">Unpaid</Badge>
                             )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {debt.debt_paid_by_name || "-"}
                           </TableCell>
                         </TableRow>
                       ))
