@@ -37,15 +37,10 @@ const AdminReceipts = () => {
 
   const fetchReceiptItems = async (receiptId: string) => {
     if (receiptItems[receiptId]) return;
-    
     const { data } = await supabase
       .from('receipt_items')
-      .select(`
-        *,
-        medicines:medicine_id(name)
-      `)
+      .select(`*, medicines:medicine_id(name)`)
       .eq('receipt_id', receiptId);
-    
     setReceiptItems(prev => ({ ...prev, [receiptId]: data || [] }));
   };
 
@@ -61,22 +56,12 @@ const AdminReceipts = () => {
   };
 
   const getPaymentMethodLabel = (method: string) => {
-    const labels: Record<string, string> = {
-      cash: 'Cash',
-      evc_plus: 'EVC Plus',
-      debt: 'Debt',
-      bank_card: 'Bank Card'
-    };
+    const labels: Record<string, string> = { cash: 'Cash', evc_plus: 'EVC Plus', debt: 'Debt', bank_card: 'Bank Card' };
     return labels[method] || method;
   };
 
   const getPaymentMethodVariant = (method: string): "default" | "secondary" | "destructive" | "outline" => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      cash: 'default',
-      evc_plus: 'secondary',
-      debt: 'destructive',
-      bank_card: 'outline'
-    };
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = { cash: 'default', evc_plus: 'secondary', debt: 'destructive', bank_card: 'outline' };
     return variants[method] || 'default';
   };
 
@@ -106,7 +91,7 @@ const AdminReceipts = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader title="Receipts" description="View all pharmacy receipts">
         <div className="flex gap-2 flex-wrap">
           <div className="relative">
@@ -115,10 +100,10 @@ const AdminReceipts = () => {
               placeholder="Search..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="pl-9 w-48" 
+              className="pl-9 w-full sm:w-48" 
             />
           </div>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />Export
           </Button>
         </div>
@@ -143,64 +128,62 @@ const AdminReceipts = () => {
             >
               <Card>
                 <CollapsibleTrigger asChild>
-                  <CardContent className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Receipt className="w-5 h-5 text-primary" />
+                  <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start sm:items-center justify-between gap-2">
+                      <div className="flex items-start sm:items-center gap-2 sm:gap-4 min-w-0">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
+                          <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                         </div>
-                        <div>
-                          <p className="font-semibold">{receipt.customer_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {receipt.pharmacies?.name || 'Unknown Pharmacy'} • {receipt.profiles?.full_name || receipt.profiles?.email || 'Unknown Staff'}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm sm:text-base truncate">{receipt.customer_name}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                            {receipt.pharmacies?.name || 'Unknown'} • {receipt.profiles?.full_name || receipt.profiles?.email || 'Unknown'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant={getPaymentMethodVariant(receipt.payment_method)}>
-                          {getPaymentMethodLabel(receipt.payment_method)}
-                        </Badge>
+                      <div className="flex items-center gap-2 shrink-0">
                         <div className="text-right">
-                          <p className="font-bold">{formatCurrency(receipt.total_amount)}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(receipt.created_at)}</p>
+                          <Badge variant={getPaymentMethodVariant(receipt.payment_method)} className="text-xs mb-1">
+                            {getPaymentMethodLabel(receipt.payment_method)}
+                          </Badge>
+                          <p className="font-bold text-sm sm:text-base">{formatCurrency(receipt.total_amount)}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">{formatDate(receipt.created_at)}</p>
                         </div>
                         {expandedReceipts.has(receipt.id) ? (
-                          <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                          <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="px-4 pb-4">
+                  <div className="px-3 sm:px-4 pb-3 sm:pb-4 overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Medicine</TableHead>
-                          <TableHead className="text-right">Qty</TableHead>
-                          <TableHead className="text-right">Buying Price</TableHead>
-                          <TableHead className="text-right">Selling Price</TableHead>
-                          <TableHead className="text-right">Profit</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead className="text-xs">Medicine</TableHead>
+                          <TableHead className="text-right text-xs">Qty</TableHead>
+                          <TableHead className="text-right text-xs hidden sm:table-cell">Buying</TableHead>
+                          <TableHead className="text-right text-xs">Selling</TableHead>
+                          <TableHead className="text-right text-xs hidden sm:table-cell">Profit</TableHead>
+                          <TableHead className="text-right text-xs">Total</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {receiptItems[receipt.id]?.map(item => (
                           <TableRow key={item.id}>
-                            <TableCell>{item.medicines?.name || 'Unknown'}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.buying_price)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.selling_price)}</TableCell>
-                            <TableCell className="text-right text-green-600">
-                              {formatCurrency(item.profit)}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(item.total)}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">{item.medicines?.name || 'Unknown'}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">{item.quantity}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm hidden sm:table-cell">{formatCurrency(item.buying_price)}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">{formatCurrency(item.selling_price)}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm text-green-600 hidden sm:table-cell">{formatCurrency(item.profit)}</TableCell>
+                            <TableCell className="text-right font-medium text-xs sm:text-sm">{formatCurrency(item.total)}</TableCell>
                           </TableRow>
                         )) || (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
                               Loading items...
                             </TableCell>
                           </TableRow>
