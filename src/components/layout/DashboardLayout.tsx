@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from './AppSidebar';
+import { BottomNavbar } from './BottomNavbar';
 import { Loader2 } from 'lucide-react';
 
 interface DashboardLayoutProps {
