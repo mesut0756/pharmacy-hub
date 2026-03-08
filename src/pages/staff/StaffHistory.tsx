@@ -43,8 +43,6 @@ const StaffHistory = () => {
     if (pharmacyId) fetchReceipts();
   }, [pharmacyId]);
 
-  
-
   const fetchReceipts = async () => {
     const { data } = await supabase
       .from('receipts')
@@ -109,32 +107,30 @@ const StaffHistory = () => {
     return labels[method] || method;
   };
 
-  // Apply payment method filter
   const filteredReceipts = paymentFilter
     ? receipts.filter(r => r.payment_method === paymentFilter)
     : receipts;
 
-  // Calculate sum for selected payment type
   const paymentSum =
     paymentFilter && paymentFilter !== ''
       ? filteredReceipts.reduce((sum, r) => sum + r.total_amount, 0)
       : 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader title="Sales History" description="View all recorded receipts">
-        <Button variant="outline" onClick={handleExport}>
+        <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="w-4 h-4 mr-2" />Export
         </Button>
       </PageHeader>
 
       {/* Payment Method Filter */}
-      <div className="flex items-center gap-4 mb-4">
-        <Label>Filter by Payment Method:</Label>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <Label className="text-sm whitespace-nowrap">Filter by Payment:</Label>
         <select
           value={paymentFilter}
           onChange={(e) => setPaymentFilter(e.target.value)}
-          className="rounded px-3 py-2 bg-input text-foreground"
+          className="rounded px-3 py-2 bg-input text-foreground text-sm w-full sm:w-auto"
         >
           <option value="">All</option>
           <option value="cash">Cash</option>
@@ -145,16 +141,15 @@ const StaffHistory = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <History className="w-5 h-5" />Sales Records
           </CardTitle>
-            {/* Show payment sum only if a specific payment is selected */}
-              {paymentFilter && paymentFilter !== '' && (
-                <div className="mt-4 text-right text-lg font-bold">
-                  Total {formatPaymentMethod(paymentFilter)}: ${paymentSum.toFixed(2)}
-                </div>
-              )}
+          {paymentFilter && paymentFilter !== '' && (
+            <p className="text-sm font-semibold text-right">
+              Total {formatPaymentMethod(paymentFilter)}: ${paymentSum.toFixed(2)}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {filteredReceipts.length === 0 ? (
@@ -168,46 +163,52 @@ const StaffHistory = () => {
                   onOpenChange={(open) => setExpandedId(open ? receipt.id : null)}
                 >
                   <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                      <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors gap-2">
+                      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                         {expandedId === receipt.id ? (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-4 h-4 shrink-0" />
                         ) : (
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-4 h-4 shrink-0" />
                         )}
-                        <Receipt className="w-5 h-5 text-muted-foreground" />
-                        <div className="text-left">
-                          <p className="font-medium">{receipt.customer_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(receipt.created_at).toLocaleString()}
+                        <div className="text-left min-w-0">
+                          <p className="font-medium truncate">{receipt.customer_name}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {new Date(receipt.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="outline">{formatPaymentMethod(receipt.payment_method)}</Badge>
-                        <Badge variant="secondary">{receipt.receipt_items.length} items</Badge>
-                        <span className="font-bold text-lg">${Number(receipt.total_amount).toFixed(2)}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="hidden sm:flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{formatPaymentMethod(receipt.payment_method)}</Badge>
+                          <Badge variant="secondary" className="text-xs">{receipt.receipt_items.length} items</Badge>
+                        </div>
+                        <span className="font-bold text-sm sm:text-lg">${Number(receipt.total_amount).toFixed(2)}</span>
                       </div>
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="mt-2 ml-8 border rounded-lg overflow-hidden">
+                    {/* Mobile: show badges */}
+                    <div className="flex gap-2 mt-2 ml-6 sm:hidden">
+                      <Badge variant="outline" className="text-xs">{formatPaymentMethod(receipt.payment_method)}</Badge>
+                      <Badge variant="secondary" className="text-xs">{receipt.receipt_items.length} items</Badge>
+                    </div>
+                    <div className="mt-2 sm:ml-8 border rounded-lg overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Medicine</TableHead>
-                            <TableHead className="text-right">Qty</TableHead>
-                            <TableHead className="text-right">Price</TableHead>
-                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="text-xs">Medicine</TableHead>
+                            <TableHead className="text-right text-xs">Qty</TableHead>
+                            <TableHead className="text-right text-xs">Price</TableHead>
+                            <TableHead className="text-right text-xs">Total</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {receipt.receipt_items.map(item => (
                             <TableRow key={item.id}>
-                              <TableCell>{item.medicines?.name || 'Unknown'}</TableCell>
-                              <TableCell className="text-right">{item.quantity}</TableCell>
-                              <TableCell className="text-right">${Number(item.selling_price).toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-medium">${Number(item.total).toFixed(2)}</TableCell>
+                              <TableCell className="text-xs sm:text-sm">{item.medicines?.name || 'Unknown'}</TableCell>
+                              <TableCell className="text-right text-xs sm:text-sm">{item.quantity}</TableCell>
+                              <TableCell className="text-right text-xs sm:text-sm">${Number(item.selling_price).toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-medium text-xs sm:text-sm">${Number(item.total).toFixed(2)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
