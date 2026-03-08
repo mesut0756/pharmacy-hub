@@ -71,6 +71,8 @@ export const BottomNavbar = () => {
   const visibleItems = navItems.slice(0, 4);
   const moreItems = navItems.slice(4);
 
+  const onNotificationsPage = location.pathname.includes('/notifications');
+
   // Fetch unread notification count
   useEffect(() => {
     const fetchUnread = async () => {
@@ -84,9 +86,9 @@ export const BottomNavbar = () => {
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, onNotificationsPage]);
 
-  const hasUnread = unreadCount > 0;
+  const hasUnread = unreadCount > 0 && !onNotificationsPage;
 
   const isActive = (path: string) => {
     if (path === '/admin' || path === '/staff') {
