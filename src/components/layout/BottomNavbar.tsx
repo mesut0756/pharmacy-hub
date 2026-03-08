@@ -20,12 +20,14 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NavItem {
   title: string;
   url: string;
   icon: React.ElementType;
+  badge?: boolean;
 }
 
 const adminNavItems: NavItem[] = [
@@ -34,7 +36,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Medicines', url: '/admin/medicines', icon: Pill },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
   { title: 'Debts', url: '/admin/debts', icon: CreditCard },
-  { title: 'Notifications', url: '/admin/notifications', icon: Bell },
+  { title: 'Notifications', url: '/admin/notifications', icon: Bell, badge: true },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
@@ -45,19 +47,46 @@ const staffNavItems: NavItem[] = [
   { title: 'Receipts', url: '/staff/sale', icon: ReceiptIcon },
   { title: 'Debts', url: '/staff/debts', icon: CreditCard },
   { title: 'History', url: '/staff/history', icon: History },
-  { title: 'Notifications', url: '/staff/notifications', icon: Bell },
+  { title: 'Notifications', url: '/staff/notifications', icon: Bell, badge: true },
   { title: 'Profile', url: '/staff/profile', icon: User },
 ];
 
+const NavIcon = ({ item, isActive, showBadge }: { item: NavItem; isActive: boolean; showBadge: boolean }) => (
+  <div className="relative">
+    <item.icon className="w-5 h-5" />
+    {item.badge && showBadge && (
+      <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-destructive border-2 border-card animate-pulse" />
+    )}
+  </div>
+);
+
 export const BottomNavbar = () => {
-  const { isAdmin, signOut } = useAuth();
+  const { isAdmin, signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navItems = isAdmin ? adminNavItems : staffNavItems;
   const visibleItems = navItems.slice(0, 4);
   const moreItems = navItems.slice(4);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      if (!user) return;
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_confirmed', false);
+      setUnreadCount(count ?? 0);
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const hasUnread = unreadCount > 0;
 
   const isActive = (path: string) => {
     if (path === '/admin' || path === '/staff') {
@@ -67,6 +96,7 @@ export const BottomNavbar = () => {
   };
 
   const isMoreActive = moreItems.some((item) => isActive(item.url));
+  const moreHasBadge = moreItems.some((item) => item.badge) && hasUnread;
 
   return (
     <>
@@ -88,20 +118,25 @@ export const BottomNavbar = () => {
                 to={item.url}
                 onClick={() => setMoreOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors active:scale-95 transition-transform duration-150",
                   "text-muted-foreground hover:text-foreground hover:bg-accent",
                   isActive(item.url) && "bg-primary text-primary-foreground hover:bg-primary"
                 )}
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} />
                 <span className="font-medium text-sm">{item.title}</span>
+                {item.badge && hasUnread && (
+                  <span className="ml-auto text-[10px] font-bold bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </NavLink>
             ))}
 
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors active:scale-95 transition-transform duration-150 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               <span className="font-medium text-sm">
@@ -112,7 +147,7 @@ export const BottomNavbar = () => {
             {/* Logout */}
             <button
               onClick={signOut}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors text-destructive hover:bg-destructive/10"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors active:scale-95 transition-transform duration-150 text-destructive hover:bg-destructive/10"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium text-sm">Logout</span>
@@ -129,12 +164,12 @@ export const BottomNavbar = () => {
               key={item.url}
               to={item.url}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-150 active:scale-90",
                 "text-muted-foreground",
                 isActive(item.url) && "text-primary"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} />
               <span className="text-[10px] font-medium">{item.title}</span>
             </NavLink>
           ))}
@@ -143,12 +178,17 @@ export const BottomNavbar = () => {
           <button
             onClick={() => setMoreOpen(!moreOpen)}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
+              "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-150 active:scale-90",
               "text-muted-foreground",
               (moreOpen || isMoreActive) && "text-primary"
             )}
           >
-            {moreOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+            <div className="relative">
+              {moreOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+              {moreHasBadge && !moreOpen && (
+                <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-destructive border-2 border-card animate-pulse" />
+              )}
+            </div>
             <span className="text-[10px] font-medium">More</span>
           </button>
         </div>
