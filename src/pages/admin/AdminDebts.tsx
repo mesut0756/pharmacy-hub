@@ -21,6 +21,7 @@ import { CalendarIcon, Plus, Pencil, Trash2, Search, DollarSign } from "lucide-r
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface CustomerDebtReceipt {
   id: string;
@@ -221,8 +222,15 @@ const AdminDebts = () => {
     </Dialog>
   );
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['customer-debts'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-debts'] }),
+    ]);
+  };
+
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={handleRefresh} className="space-y-6">
       <PageHeader title="Debts Management" description="Manage customer debts and your owed debts" />
 
       <Tabs defaultValue="customer" className="w-full">
@@ -423,7 +431,7 @@ const AdminDebts = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

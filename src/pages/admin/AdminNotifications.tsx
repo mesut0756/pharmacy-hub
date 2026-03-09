@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, AlertTriangle, TrendingDown, Clock, CheckCircle } from 'lucide-react';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface Notification {
   id: string;
@@ -72,7 +73,7 @@ const AdminNotifications = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={fetchNotifications} className="space-y-6">
       <PageHeader title="Notifications" description="View all system notifications" />
 
       <Tabs defaultValue="pending" className="space-y-4">
@@ -115,7 +116,7 @@ const AdminNotifications = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

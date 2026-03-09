@@ -17,6 +17,7 @@ import {
   Bar,
   Legend,
 } from 'recharts';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface ProfitData {
   period: string;
@@ -211,7 +212,7 @@ const AdminProfitAnalytics = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchProfitData} className="space-y-8">
       <PageHeader
         title="Profit Analytics"
         description="Track profit trends across all pharmacies"
@@ -352,7 +353,7 @@ const AdminProfitAnalytics = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

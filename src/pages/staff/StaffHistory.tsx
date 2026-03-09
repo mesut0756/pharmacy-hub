@@ -11,6 +11,7 @@ import { History, Download, ChevronDown, ChevronRight, Receipt } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatDateTime } from '@/lib/exportUtils';
 import { Label } from '@/components/ui/label';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface ReceiptItem {
   id: string;
@@ -117,7 +118,7 @@ const StaffHistory = () => {
       : 0;
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={fetchReceipts} className="space-y-6">
       <PageHeader title="Sales History" description="View all recorded receipts">
         <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="w-4 h-4 mr-2" />Export
@@ -221,7 +222,7 @@ const StaffHistory = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

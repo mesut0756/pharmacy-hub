@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Building2, Users, Pill, DollarSign, Search, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface PharmacyData {
   id: string;
@@ -102,7 +103,7 @@ const AdminPharmacies = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchPharmacies} className="space-y-8">
       <PageHeader
         title="Pharmacies"
         description="View and manage all pharmacies in the system"
@@ -200,7 +201,7 @@ const AdminPharmacies = () => {
           ))}
         </div>
       )}
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

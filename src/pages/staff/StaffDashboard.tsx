@@ -6,6 +6,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill, AlertTriangle, TrendingDown, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 const StaffDashboard = () => {
   const { pharmacyId } = useAuth();
@@ -76,7 +77,7 @@ const StaffDashboard = () => {
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchData} className="space-y-8">
       <PageHeader title="Staff Dashboard" description="Your pharmacy overview" />
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Medicines" value={stats.totalMedicines} icon={Pill} variant="primary" />
@@ -115,7 +116,7 @@ const StaffDashboard = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 export default StaffDashboard;

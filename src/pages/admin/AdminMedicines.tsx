@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Search, Download, Pill, AlertTriangle, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface Medicine {
   id: string;
@@ -110,7 +111,7 @@ const AdminMedicines = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={fetchData} className="space-y-6">
       <PageHeader title="All Medicines" description="View all medicines across pharmacies">
         <Button onClick={exportToCSV} variant="outline" size="sm">
           <Download className="w-4 h-4 mr-2" />Export
@@ -274,7 +275,7 @@ const AdminMedicines = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

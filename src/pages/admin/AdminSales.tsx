@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatCurrency, formatDateTime } from '@/lib/exportUtils';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface PharmacyInfo {
   name: string;
@@ -310,7 +311,7 @@ const AdminSales = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchSalesData} className="space-y-8">
       <PageHeader
         title="Sales Reports"
         description="View and analyze sales data across all pharmacies"
@@ -453,7 +454,7 @@ const AdminSales = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

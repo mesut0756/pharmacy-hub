@@ -13,6 +13,7 @@ import {
 import { Search, DollarSign, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 const StaffDebts = () => {
   const { pharmacyId, user } = useAuth();
@@ -61,8 +62,12 @@ const StaffDebts = () => {
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['staff-customer-debts'] });
+  };
+
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={handleRefresh} className="space-y-6">
       <PageHeader title="Customer Debts" description="Manage customer debt payments" />
 
       <Card>
@@ -158,7 +163,7 @@ const StaffDebts = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 
