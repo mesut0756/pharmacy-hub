@@ -430,7 +430,7 @@ const AdminDebts = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 
