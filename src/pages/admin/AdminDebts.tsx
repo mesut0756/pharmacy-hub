@@ -21,6 +21,7 @@ import { CalendarIcon, Plus, Pencil, Trash2, Search, DollarSign } from "lucide-r
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface CustomerDebtReceipt {
   id: string;
