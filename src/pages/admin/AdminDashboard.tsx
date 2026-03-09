@@ -7,6 +7,7 @@ import { Building2, Users, Pill, AlertTriangle, TrendingDown, DollarSign, Credit
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 interface DashboardStats {
   totalPharmacies: number;
@@ -147,7 +148,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchDashboardData} className="space-y-8">
       <PageHeader
         title="Admin Dashboard"
         description="Overview of all pharmacy operations"
@@ -286,7 +287,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

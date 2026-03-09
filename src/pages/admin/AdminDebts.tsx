@@ -221,8 +221,15 @@ const AdminDebts = () => {
     </Dialog>
   );
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['customer-debts'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-debts'] }),
+    ]);
+  };
+
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={handleRefresh} className="space-y-6">
       <PageHeader title="Debts Management" description="Manage customer debts and your owed debts" />
 
       <Tabs defaultValue="customer" className="w-full">

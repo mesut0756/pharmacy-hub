@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bell, AlertTriangle, TrendingDown, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 const StaffNotifications = () => {
   const { pharmacyId, user } = useAuth();
@@ -27,7 +28,7 @@ const StaffNotifications = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={fetchNotifications} className="space-y-6">
       <PageHeader title="Notifications" description="Manage alerts for your pharmacy" />
       <Card>
         <CardHeader>
@@ -63,7 +64,7 @@ const StaffNotifications = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 export default StaffNotifications;

@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Search, Receipt, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { exportToCSV, formatCurrency, formatDate } from '@/lib/exportUtils';
 import { useToast } from '@/hooks/use-toast';
+import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 const AdminReceipts = () => {
   const { toast } = useToast();
@@ -91,7 +92,7 @@ const AdminReceipts = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer onRefresh={fetchReceipts} className="space-y-6">
       <PageHeader title="Receipts" description="View all pharmacy receipts">
         <div className="flex gap-2 flex-wrap">
           <div className="relative">
@@ -197,7 +198,7 @@ const AdminReceipts = () => {
           ))}
         </div>
       )}
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

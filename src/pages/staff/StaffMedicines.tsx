@@ -29,6 +29,7 @@ import { Plus, Search, Pill, Edit, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { exportToCSV } from "@/lib/exportUtils";
+import { PullToRefreshContainer } from "@/components/ui/pull-to-refresh-container";
 
 const StaffMedicines = () => {
   const { pharmacyId, user } = useAuth();
@@ -161,7 +162,7 @@ const StaffMedicines = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchMedicines} className="space-y-8">
       <PageHeader
         title="Medicines"
         description="Manage your pharmacy inventory"
@@ -401,7 +402,7 @@ const StaffMedicines = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 
