@@ -20,6 +20,7 @@ const StaffDashboard = () => {
     monthlyProfit: 0
   });
   const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
+  const [expiringMedicines, setExpiringMedicines] = useState<any[]>([]);
 
   useEffect(() => {
     if (pharmacyId) fetchData();
