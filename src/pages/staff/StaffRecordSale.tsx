@@ -70,7 +70,7 @@ const StaffRecordSale = () => {
               {/* MEDICINE INFO */}
               <div className="flex-1">
                 <p className="font-semibold">{med.name}</p>
-                <p className="text-sm text-muted-foreground">{med.category || 'Uncategorized'}</p>
+                <p className="text-sm text-muted-foreground">Stock: {med.stock_quantity}</p>
                 <div className="mt-2 flex justify-between items-center">
                   <span className="text-lg font-bold">${med.price}</span>
                   <Badge variant="secondary">{med.stock_quantity} available</Badge>

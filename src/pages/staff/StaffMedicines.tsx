@@ -322,9 +322,6 @@ const StaffMedicines = () => {
                       <TableCell className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
                         {med.name}
                       </TableCell>
-                      <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
-                        {med.category || '—'}
-                      </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm hidden sm:table-cell">
                         ${Number(med.buying_price || 0).toFixed(2)}
                       </TableCell>

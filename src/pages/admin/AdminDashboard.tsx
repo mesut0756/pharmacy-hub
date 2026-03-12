@@ -159,7 +159,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Pharmacies" value={stats.totalPharmacies} icon={Building2} variant="primary" />
         <StatCard title="Total Staff" value={stats.totalStaff} icon={Users} variant="info" />
         <StatCard title="Total Medicines" value={stats.totalMedicines} icon={Pill} variant="success" />
-        <StatCard title="Expiring Soon" value={stats.expiringMedicines} icon={AlertTriangle} variant="warning" description="Within 20 days" />
+        <StatCard title="Expiring Soon" value={stats.expiringMedicines} icon={AlertTriangle} variant="warning" description="Within 30 days" />
         <StatCard title="Low Stock" value={stats.lowStockMedicines} icon={TrendingDown} variant="destructive" />
         <StatCard title="Yearly Sales" value={formatCurrency(stats.totalYearlySales)} icon={DollarSign} variant="primary" />
         <StatCard title="Customer Debts" value={formatCurrency(stats.totalCustomerDebt)} icon={CreditCard} variant="warning" description="Unpaid" />

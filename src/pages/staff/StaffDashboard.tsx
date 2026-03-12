@@ -73,6 +73,11 @@ const StaffDashboard = () => {
       monthlyProfit
     });
     setRecentReceipts(recent || []);
+
+    // Fetch expiring medicines for countdown
+    const expiring = medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date())
+      .sort((a: any, b: any) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()) || [];
+    setExpiringMedicines(expiring);
   };
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
