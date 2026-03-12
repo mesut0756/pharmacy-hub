@@ -84,7 +84,7 @@ const AdminMedicines = () => {
     if (expiryFilter === 'expiring') matchesExpiry = isExpiringSoon(med.expiry_date);
     else if (expiryFilter === 'expired') matchesExpiry = isExpired(med.expiry_date);
     else if (expiryFilter === 'valid') matchesExpiry = !isExpiringSoon(med.expiry_date) && !isExpired(med.expiry_date);
-    return matchesSearch && matchesPharmacy && matchesCategory && matchesStock && matchesExpiry;
+    return matchesSearch && matchesPharmacy && matchesStock && matchesExpiry;
   });
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(v);
