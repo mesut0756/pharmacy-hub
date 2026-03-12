@@ -27,7 +27,7 @@ const StaffDashboard = () => {
 
   const fetchData = async () => {
     const { data: medicines } = await supabase.from('medicines').select('*').eq('pharmacy_id', pharmacyId);
-    const twentyDays = new Date(); twentyDays.setDate(twentyDays.getDate() + 20);
+    const thirtyDays = new Date(); thirtyDays.setDate(thirtyDays.getDate() + 30);
     const today = new Date().toISOString().split('T')[0];
     const startOfMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`;
 
