@@ -74,9 +74,8 @@ const AdminMedicines = () => {
   const isLowStock = (q: number, t: number) => q <= t;
 
   const filteredMedicines = medicines.filter((med) => {
-    const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) || med.category?.toLowerCase().includes(searchTerm.toLowerCase()) || med.pharmacy_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) || med.pharmacy_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPharmacy = selectedPharmacy === 'all' || med.pharmacy_id === selectedPharmacy;
-    const matchesCategory = selectedCategory === 'all' || med.category === selectedCategory;
     let matchesStock = true;
     if (stockFilter === 'low') matchesStock = isLowStock(med.stock_quantity, med.low_stock_threshold);
     else if (stockFilter === 'out') matchesStock = med.stock_quantity === 0;
