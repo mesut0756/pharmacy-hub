@@ -63,7 +63,7 @@ const AdminMedicines = () => {
     setLoading(false);
   };
 
-  const getUniqueCategories = () => [...new Set(medicines.map(m => m.category).filter(Boolean))];
+  
 
   const isExpiringSoon = (d: string | null) => {
     if (!d) return false;
