@@ -65,7 +65,7 @@ const StaffDashboard = () => {
     setStats({
       totalMedicines: medicines?.length || 0,
       lowStock: medicines?.filter(m => m.stock_quantity <= m.low_stock_threshold).length || 0,
-      expiringSoon: medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= twentyDays && new Date(m.expiry_date) >= new Date()).length || 0,
+      expiringSoon: medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date()).length || 0,
       todaySales,
       monthlySales,
       todayProfit,
