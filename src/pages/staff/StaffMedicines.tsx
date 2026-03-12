@@ -68,7 +68,6 @@ const StaffMedicines = () => {
     e.preventDefault();
     const payload = {
       name: form.name,
-      category: form.category || null,
       price: parseFloat(form.price),
       buying_price: form.buying_price ? parseFloat(form.buying_price) : 0,
       stock_quantity: parseInt(form.stock_quantity),
