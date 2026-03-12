@@ -128,7 +128,6 @@ const StaffMedicines = () => {
     setEditingMed(med);
     setForm({
       name: med.name,
-      category: med.category || "",
       price: med.price.toString(),
       buying_price: med.buying_price?.toString() || "",
       stock_quantity: med.stock_quantity.toString(),
