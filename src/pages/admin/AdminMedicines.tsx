@@ -234,7 +234,7 @@ const AdminMedicines = () => {
                 {loading ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8">Loading...</TableCell></TableRow>
                 ) : filteredMedicines.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No medicines found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No medicines found</TableCell></TableRow>
                 ) : (
                   filteredMedicines.map(med => (
                     <TableRow key={med.id}>
