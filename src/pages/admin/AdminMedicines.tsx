@@ -222,7 +222,7 @@ const AdminMedicines = () => {
                 <TableRow>
                   <TableHead>Medicine</TableHead>
                   <TableHead>Pharmacy</TableHead>
-                  <TableHead>Category</TableHead>
+                  
                   <TableHead className="text-right">Selling</TableHead>
                   <TableHead className="text-right">Buying</TableHead>
                   <TableHead className="text-right">Profit</TableHead>
