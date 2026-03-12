@@ -142,7 +142,6 @@ const StaffMedicines = () => {
   const handleExport = () => {
     exportToCSV(medicines, "medicines", [
       { key: "name", label: "Name" },
-      { key: "category", label: "Category" },
       { key: "buying_price", label: "Buying Price" },
       { key: "price", label: "Selling Price" },
       { key: "profit", label: "Profit" },
