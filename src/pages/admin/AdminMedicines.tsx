@@ -16,7 +16,7 @@ import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-containe
 interface Medicine {
   id: string;
   name: string;
-  category: string | null;
+  
   price: number;
   buying_price: number | null;
   profit: number | null;
