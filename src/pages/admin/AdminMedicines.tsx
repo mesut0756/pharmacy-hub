@@ -90,8 +90,8 @@ const AdminMedicines = () => {
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(v);
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Category', 'Pharmacy', 'Selling Price', 'Buying Price', 'Profit', 'Stock', 'Threshold', 'Expiry Date'];
-    const rows = filteredMedicines.map(med => [med.name, med.category || '', med.pharmacy_name, med.price, med.buying_price || 0, med.profit || 0, med.stock_quantity, med.low_stock_threshold, med.expiry_date || '']);
+    const headers = ['Name', 'Pharmacy', 'Selling Price', 'Buying Price', 'Profit', 'Stock', 'Threshold', 'Expiry Date'];
+    const rows = filteredMedicines.map(med => [med.name, med.pharmacy_name, med.price, med.buying_price || 0, med.profit || 0, med.stock_quantity, med.low_stock_threshold, med.expiry_date || '']);
     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
