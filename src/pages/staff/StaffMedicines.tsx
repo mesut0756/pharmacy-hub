@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Pill, Edit, Download, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { exportToCSV } from "@/lib/exportUtils";
@@ -162,7 +163,7 @@ const StaffMedicines = () => {
   );
 
   return (
-    <PullToRefreshContainer onRefresh={fetchMedicines} className="space-y-8">
+    <PullToRefreshContainer onRefresh={fetchMedicines} className="space-y-6">
       <PageHeader
         title="Medicines"
         description="Manage your pharmacy inventory"
@@ -174,10 +175,10 @@ const StaffMedicines = () => {
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 w-48"
+              className="pl-9 w-full sm:w-48"
             />
           </div>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -189,9 +190,9 @@ const StaffMedicines = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Medicine
+                Add
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -222,7 +223,6 @@ const StaffMedicines = () => {
                     <option value="Human">Human</option>
                   </select>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Buying Price</Label>
@@ -311,74 +311,94 @@ const StaffMedicines = () => {
           </Dialog>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((med) => (
-          <Card key={med.id} className="card-hover overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold">{med.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {med.category || "Uncategorized"}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEdit(med)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setDeleteConfirm(med)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Buying: </span>
-                    <span>${Number(med.buying_price || 0).toFixed(2)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Profit: </span>
-                    <span className="text-green-600">
-                      ${Number(med.profit || 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 flex justify-between items-center">
-                  <span className="text-lg font-bold">
-                    ${Number(med.price).toFixed(2)}
-                  </span>
-                  <Badge
-                    variant={
-                      med.stock_quantity <= med.low_stock_threshold
-                        ? "destructive"
-                        : "secondary"
-                    }
-                  >
-                    {med.stock_quantity} in stock
-                  </Badge>
-                </div>
-                {med.expiry_date && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Expires: {new Date(med.expiry_date).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {/* Delete Confirmation Dialog */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Name</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Category</TableHead>
+                  <TableHead className="text-right text-xs hidden sm:table-cell">Buying</TableHead>
+                  <TableHead className="text-right text-xs">Price</TableHead>
+                  <TableHead className="text-right text-xs hidden sm:table-cell">Profit</TableHead>
+                  <TableHead className="text-right text-xs">Stock</TableHead>
+                  <TableHead className="text-right text-xs hidden md:table-cell">Expiry</TableHead>
+                  <TableHead className="text-right text-xs w-20">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                      No medicines found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((med) => (
+                    <TableRow key={med.id}>
+                      <TableCell className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
+                        {med.name}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
+                        {med.category || '—'}
+                      </TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm hidden sm:table-cell">
+                        ${Number(med.buying_price || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm font-semibold">
+                        ${Number(med.price).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm text-green-600 hidden sm:table-cell">
+                        ${Number(med.profit || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant={
+                            med.stock_quantity <= med.low_stock_threshold
+                              ? "destructive"
+                              : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {med.stock_quantity}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground hidden md:table-cell">
+                        {med.expiry_date
+                          ? new Date(med.expiry_date).toLocaleDateString()
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => openEdit(med)}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteConfirm(med)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       <AlertDialog
         open={!!deleteConfirm}
         onOpenChange={() => setDeleteConfirm(null)}

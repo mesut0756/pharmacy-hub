@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { History, Download, ChevronDown, ChevronRight, Receipt } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { History, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatDateTime } from '@/lib/exportUtils';
 import { Label } from '@/components/ui/label';
@@ -37,7 +37,7 @@ const StaffHistory = () => {
   const { pharmacyId } = useAuth();
   const { toast } = useToast();
   const [receipts, setReceipts] = useState<ReceiptData[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<string>('');
 
   useEffect(() => {
@@ -125,7 +125,6 @@ const StaffHistory = () => {
         </Button>
       </PageHeader>
 
-      {/* Payment Method Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <Label className="text-sm whitespace-nowrap">Filter by Payment:</Label>
         <select
@@ -143,85 +142,115 @@ const StaffHistory = () => {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <History className="w-5 h-5" />Sales Records
-          </CardTitle>
-          {paymentFilter && paymentFilter !== '' && (
-            <p className="text-sm font-semibold text-right">
-              Total {formatPaymentMethod(paymentFilter)}: ${paymentSum.toFixed(2)}
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <History className="w-5 h-5" />Sales Records
+            </CardTitle>
+            {paymentFilter && paymentFilter !== '' && (
+              <p className="text-sm font-semibold">
+                Total {formatPaymentMethod(paymentFilter)}: ${paymentSum.toFixed(2)}
+              </p>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          {filteredReceipts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No receipts yet</p>
-          ) : (
-            <div className="space-y-3">
-              {filteredReceipts.map(receipt => (
-                <Collapsible 
-                  key={receipt.id} 
-                  open={expandedId === receipt.id}
-                  onOpenChange={(open) => setExpandedId(open ? receipt.id : null)}
-                >
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors gap-2">
-                      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                        {expandedId === receipt.id ? (
-                          <ChevronDown className="w-4 h-4 shrink-0" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 shrink-0" />
-                        )}
-                        <div className="text-left min-w-0">
-                          <p className="font-medium truncate">{receipt.customer_name}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {new Date(receipt.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="hidden sm:flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">{formatPaymentMethod(receipt.payment_method)}</Badge>
-                          <Badge variant="secondary" className="text-xs">{receipt.receipt_items.length} items</Badge>
-                        </div>
-                        <span className="font-bold text-sm sm:text-lg">${Number(receipt.total_amount).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    {/* Mobile: show badges */}
-                    <div className="flex gap-2 mt-2 ml-6 sm:hidden">
-                      <Badge variant="outline" className="text-xs">{formatPaymentMethod(receipt.payment_method)}</Badge>
-                      <Badge variant="secondary" className="text-xs">{receipt.receipt_items.length} items</Badge>
-                    </div>
-                    <div className="mt-2 sm:ml-8 border rounded-lg overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">Medicine</TableHead>
-                            <TableHead className="text-right text-xs">Qty</TableHead>
-                            <TableHead className="text-right text-xs">Price</TableHead>
-                            <TableHead className="text-right text-xs">Total</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {receipt.receipt_items.map(item => (
-                            <TableRow key={item.id}>
-                              <TableCell className="text-xs sm:text-sm">{item.medicines?.name || 'Unknown'}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm">{item.quantity}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm">${Number(item.selling_price).toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-medium text-xs sm:text-sm">${Number(item.total).toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-            </div>
-          )}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Customer</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Payment</TableHead>
+                  <TableHead className="text-right text-xs hidden sm:table-cell">Items</TableHead>
+                  <TableHead className="text-right text-xs">Total</TableHead>
+                  <TableHead className="text-right text-xs">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredReceipts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      No receipts yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredReceipts.map(receipt => (
+                    <TableRow
+                      key={receipt.id}
+                      className="cursor-pointer"
+                      onClick={() => setSelectedReceipt(receipt)}
+                    >
+                      <TableCell className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
+                        {receipt.customer_name}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant="outline" className="text-xs">
+                          {formatPaymentMethod(receipt.payment_method)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm hidden sm:table-cell">
+                        {receipt.receipt_items.length}
+                      </TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm font-bold">
+                        ${Number(receipt.total_amount).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {new Date(receipt.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Receipt Detail Modal */}
+      <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              Receipt — {selectedReceipt?.customer_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Payment</span>
+              <Badge variant="outline">{formatPaymentMethod(selectedReceipt?.payment_method || '')}</Badge>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Date</span>
+              <span>{selectedReceipt && new Date(selectedReceipt.created_at).toLocaleString()}</span>
+            </div>
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Medicine</TableHead>
+                    <TableHead className="text-right text-xs">Qty</TableHead>
+                    <TableHead className="text-right text-xs">Price</TableHead>
+                    <TableHead className="text-right text-xs">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedReceipt?.receipt_items.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-xs sm:text-sm">{item.medicines?.name || 'Unknown'}</TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm">${Number(item.selling_price).toFixed(2)}</TableCell>
+                      <TableCell className="text-right text-xs sm:text-sm font-medium">${Number(item.total).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t font-semibold">
+              <span>Total</span>
+              <span>${Number(selectedReceipt?.total_amount || 0).toFixed(2)}</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PullToRefreshContainer>
   );
 };
