@@ -39,7 +39,7 @@ const AdminMedicines = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPharmacy, setSelectedPharmacy] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
   const [stockFilter, setStockFilter] = useState<string>('all');
   const [expiryFilter, setExpiryFilter] = useState<string>('all');
 
