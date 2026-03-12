@@ -53,7 +53,7 @@ const AdminMedicines = () => {
     ]);
     if (medicinesRes.data) {
       setMedicines(medicinesRes.data.map((m: any) => ({
-        id: m.id, name: m.name, category: m.category, price: m.price,
+        id: m.id, name: m.name, price: m.price,
         buying_price: m.buying_price, profit: m.profit, stock_quantity: m.stock_quantity,
         low_stock_threshold: m.low_stock_threshold, expiry_date: m.expiry_date,
         image_url: m.image_url, pharmacy_name: m.pharmacies?.name || 'Unknown', pharmacy_id: m.pharmacy_id,
