@@ -68,7 +68,7 @@ const AdminMedicines = () => {
   const isExpiringSoon = (d: string | null) => {
     if (!d) return false;
     const days = Math.ceil((new Date(d).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return days <= 20 && days >= 0;
+    return days <= 30 && days >= 0;
   };
   const isExpired = (d: string | null) => d ? new Date(d) < new Date() : false;
   const isLowStock = (q: number, t: number) => q <= t;
