@@ -301,7 +301,6 @@ const StaffMedicines = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Name</TableHead>
-                  <TableHead className="text-xs hidden sm:table-cell">Category</TableHead>
                   <TableHead className="text-right text-xs hidden sm:table-cell">Buying</TableHead>
                   <TableHead className="text-right text-xs">Price</TableHead>
                   <TableHead className="text-right text-xs hidden sm:table-cell">Profit</TableHead>
