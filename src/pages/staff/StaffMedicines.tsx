@@ -42,7 +42,6 @@ const StaffMedicines = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [form, setForm] = useState({
     name: "",
-    category: "Animal",
     price: "",
     buying_price: "",
     stock_quantity: "",
