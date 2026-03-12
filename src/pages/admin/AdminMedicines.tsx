@@ -200,8 +200,7 @@ const AdminMedicines = () => {
                     {med.profit ? <span className={med.profit >= 0 ? 'text-green-600' : 'text-destructive'}>{formatCurrency(med.profit)}</span> : '-'}
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  {med.category && <Badge variant="outline" className="text-xs">{med.category}</Badge>}
+                <div className="flex items-center justify-end">
                   {med.expiry_date && (
                     <Badge variant={isExpired(med.expiry_date) ? 'destructive' : isExpiringSoon(med.expiry_date) ? 'secondary' : 'outline'} className="text-xs">
                       {format(new Date(med.expiry_date), 'MMM dd, yyyy')}
