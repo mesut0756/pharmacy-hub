@@ -240,7 +240,7 @@ const AdminMedicines = () => {
                     <TableRow key={med.id}>
                       <TableCell className="font-medium">{med.name}</TableCell>
                       <TableCell>{med.pharmacy_name}</TableCell>
-                      <TableCell>{med.category ? <Badge variant="outline">{med.category}</Badge> : '-'}</TableCell>
+                      
                       <TableCell className="text-right">{formatCurrency(med.price)}</TableCell>
                       <TableCell className="text-right">{med.buying_price ? formatCurrency(med.buying_price) : '-'}</TableCell>
                       <TableCell className="text-right">
