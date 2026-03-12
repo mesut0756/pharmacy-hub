@@ -152,13 +152,6 @@ const AdminMedicines = () => {
                 {pharmacies.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {getUniqueCategories().map(cat => <SelectItem key={cat} value={cat!}>{cat}</SelectItem>)}
-              </SelectContent>
-            </Select>
             <Select value={stockFilter} onValueChange={setStockFilter}>
               <SelectTrigger><SelectValue placeholder="Stock Status" /></SelectTrigger>
               <SelectContent>
