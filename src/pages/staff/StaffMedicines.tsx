@@ -114,7 +114,6 @@ const StaffMedicines = () => {
     setEditingMed(null);
     setForm({
       name: "",
-      category: "",
       price: "",
       buying_price: "",
       stock_quantity: "",
