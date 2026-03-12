@@ -70,7 +70,7 @@ const AdminDashboard = () => {
     const { data: expiringData } = await supabase
       .from('medicines')
       .select('id, name, expiry_date, pharmacy_id, pharmacies(name)')
-      .lte('expiry_date', twentyDaysFromNow.toISOString().split('T')[0])
+      .lte('expiry_date', thirtyDaysFromNow.toISOString().split('T')[0])
       .gte('expiry_date', new Date().toISOString().split('T')[0]);
 
     const { data: lowStockData } = await supabase
