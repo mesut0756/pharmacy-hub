@@ -16,7 +16,7 @@ import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-containe
 interface Medicine {
   id: string;
   name: string;
-  category: string | null;
+  
   price: number;
   buying_price: number | null;
   profit: number | null;
@@ -39,7 +39,7 @@ const AdminMedicines = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPharmacy, setSelectedPharmacy] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
   const [stockFilter, setStockFilter] = useState<string>('all');
   const [expiryFilter, setExpiryFilter] = useState<string>('all');
 
@@ -53,7 +53,7 @@ const AdminMedicines = () => {
     ]);
     if (medicinesRes.data) {
       setMedicines(medicinesRes.data.map((m: any) => ({
-        id: m.id, name: m.name, category: m.category, price: m.price,
+        id: m.id, name: m.name, price: m.price,
         buying_price: m.buying_price, profit: m.profit, stock_quantity: m.stock_quantity,
         low_stock_threshold: m.low_stock_threshold, expiry_date: m.expiry_date,
         image_url: m.image_url, pharmacy_name: m.pharmacies?.name || 'Unknown', pharmacy_id: m.pharmacy_id,
@@ -63,20 +63,19 @@ const AdminMedicines = () => {
     setLoading(false);
   };
 
-  const getUniqueCategories = () => [...new Set(medicines.map(m => m.category).filter(Boolean))];
+  
 
   const isExpiringSoon = (d: string | null) => {
     if (!d) return false;
     const days = Math.ceil((new Date(d).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return days <= 20 && days >= 0;
+    return days <= 30 && days >= 0;
   };
   const isExpired = (d: string | null) => d ? new Date(d) < new Date() : false;
   const isLowStock = (q: number, t: number) => q <= t;
 
   const filteredMedicines = medicines.filter((med) => {
-    const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) || med.category?.toLowerCase().includes(searchTerm.toLowerCase()) || med.pharmacy_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) || med.pharmacy_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPharmacy = selectedPharmacy === 'all' || med.pharmacy_id === selectedPharmacy;
-    const matchesCategory = selectedCategory === 'all' || med.category === selectedCategory;
     let matchesStock = true;
     if (stockFilter === 'low') matchesStock = isLowStock(med.stock_quantity, med.low_stock_threshold);
     else if (stockFilter === 'out') matchesStock = med.stock_quantity === 0;
@@ -85,14 +84,14 @@ const AdminMedicines = () => {
     if (expiryFilter === 'expiring') matchesExpiry = isExpiringSoon(med.expiry_date);
     else if (expiryFilter === 'expired') matchesExpiry = isExpired(med.expiry_date);
     else if (expiryFilter === 'valid') matchesExpiry = !isExpiringSoon(med.expiry_date) && !isExpired(med.expiry_date);
-    return matchesSearch && matchesPharmacy && matchesCategory && matchesStock && matchesExpiry;
+    return matchesSearch && matchesPharmacy && matchesStock && matchesExpiry;
   });
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(v);
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Category', 'Pharmacy', 'Selling Price', 'Buying Price', 'Profit', 'Stock', 'Threshold', 'Expiry Date'];
-    const rows = filteredMedicines.map(med => [med.name, med.category || '', med.pharmacy_name, med.price, med.buying_price || 0, med.profit || 0, med.stock_quantity, med.low_stock_threshold, med.expiry_date || '']);
+    const headers = ['Name', 'Pharmacy', 'Selling Price', 'Buying Price', 'Profit', 'Stock', 'Threshold', 'Expiry Date'];
+    const rows = filteredMedicines.map(med => [med.name, med.pharmacy_name, med.price, med.buying_price || 0, med.profit || 0, med.stock_quantity, med.low_stock_threshold, med.expiry_date || '']);
     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -141,7 +140,7 @@ const AdminMedicines = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-3 sm:p-4">
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative sm:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
@@ -151,13 +150,6 @@ const AdminMedicines = () => {
               <SelectContent>
                 <SelectItem value="all">All Pharmacies</SelectItem>
                 {pharmacies.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {getUniqueCategories().map(cat => <SelectItem key={cat} value={cat!}>{cat}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={stockFilter} onValueChange={setStockFilter}>
@@ -208,8 +200,7 @@ const AdminMedicines = () => {
                     {med.profit ? <span className={med.profit >= 0 ? 'text-green-600' : 'text-destructive'}>{formatCurrency(med.profit)}</span> : '-'}
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  {med.category && <Badge variant="outline" className="text-xs">{med.category}</Badge>}
+                <div className="flex items-center justify-end">
                   {med.expiry_date && (
                     <Badge variant={isExpired(med.expiry_date) ? 'destructive' : isExpiringSoon(med.expiry_date) ? 'secondary' : 'outline'} className="text-xs">
                       {format(new Date(med.expiry_date), 'MMM dd, yyyy')}
@@ -231,7 +222,7 @@ const AdminMedicines = () => {
                 <TableRow>
                   <TableHead>Medicine</TableHead>
                   <TableHead>Pharmacy</TableHead>
-                  <TableHead>Category</TableHead>
+                  
                   <TableHead className="text-right">Selling</TableHead>
                   <TableHead className="text-right">Buying</TableHead>
                   <TableHead className="text-right">Profit</TableHead>
@@ -241,15 +232,15 @@ const AdminMedicines = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8">Loading...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8">Loading...</TableCell></TableRow>
                 ) : filteredMedicines.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No medicines found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No medicines found</TableCell></TableRow>
                 ) : (
                   filteredMedicines.map(med => (
                     <TableRow key={med.id}>
                       <TableCell className="font-medium">{med.name}</TableCell>
                       <TableCell>{med.pharmacy_name}</TableCell>
-                      <TableCell>{med.category ? <Badge variant="outline">{med.category}</Badge> : '-'}</TableCell>
+                      
                       <TableCell className="text-right">{formatCurrency(med.price)}</TableCell>
                       <TableCell className="text-right">{med.buying_price ? formatCurrency(med.buying_price) : '-'}</TableCell>
                       <TableCell className="text-right">

@@ -20,6 +20,7 @@ const StaffDashboard = () => {
     monthlyProfit: 0
   });
   const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
+  const [expiringMedicines, setExpiringMedicines] = useState<any[]>([]);
 
   useEffect(() => {
     if (pharmacyId) fetchData();
@@ -27,7 +28,7 @@ const StaffDashboard = () => {
 
   const fetchData = async () => {
     const { data: medicines } = await supabase.from('medicines').select('*').eq('pharmacy_id', pharmacyId);
-    const twentyDays = new Date(); twentyDays.setDate(twentyDays.getDate() + 20);
+    const thirtyDays = new Date(); thirtyDays.setDate(thirtyDays.getDate() + 30);
     const today = new Date().toISOString().split('T')[0];
     const startOfMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`;
 
@@ -65,13 +66,18 @@ const StaffDashboard = () => {
     setStats({
       totalMedicines: medicines?.length || 0,
       lowStock: medicines?.filter(m => m.stock_quantity <= m.low_stock_threshold).length || 0,
-      expiringSoon: medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= twentyDays && new Date(m.expiry_date) >= new Date()).length || 0,
+      expiringSoon: medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date()).length || 0,
       todaySales,
       monthlySales,
       todayProfit,
       monthlyProfit
     });
     setRecentReceipts(recent || []);
+
+    // Fetch expiring medicines for countdown
+    const expiring = medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date())
+      .sort((a: any, b: any) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()) || [];
+    setExpiringMedicines(expiring);
   };
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
@@ -82,12 +88,34 @@ const StaffDashboard = () => {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Medicines" value={stats.totalMedicines} icon={Pill} variant="primary" />
         <StatCard title="Low Stock" value={stats.lowStock} icon={TrendingDown} variant="destructive" />
-        <StatCard title="Expiring Soon" value={stats.expiringSoon} icon={AlertTriangle} variant="warning" />
+        <StatCard title="Expiring Soon" value={stats.expiringSoon} icon={AlertTriangle} variant="warning" description="Within 30 days" />
         <StatCard title="Today's Sales" value={formatCurrency(stats.todaySales)} icon={ShoppingCart} variant="success" />
         <StatCard title="Today's Profit" value={formatCurrency(stats.todayProfit)} icon={TrendingUp} variant="info" />
         <StatCard title="Monthly Sales" value={formatCurrency(stats.monthlySales)} icon={DollarSign} variant="success" />
         <StatCard title="Monthly Profit" value={formatCurrency(stats.monthlyProfit)} icon={TrendingUp} variant="info" />
       </div>
+
+      {/* Expiring Medicines Countdown */}
+      {expiringMedicines.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><AlertTriangle className="w-5 h-5 text-warning" />Expiring Medicines Countdown</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {expiringMedicines.map((med: any) => {
+                const daysLeft = Math.ceil((new Date(med.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                return (
+                  <div key={med.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                    <p className="font-medium text-sm">{med.name}</p>
+                    <Badge variant={daysLeft <= 7 ? 'destructive' : daysLeft <= 15 ? 'secondary' : 'outline'}>
+                      {daysLeft} days left
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader><CardTitle>Recent Receipts</CardTitle></CardHeader>
         <CardContent>

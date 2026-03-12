@@ -42,7 +42,6 @@ const StaffMedicines = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [form, setForm] = useState({
     name: "",
-    category: "Animal",
     price: "",
     buying_price: "",
     stock_quantity: "",
@@ -69,7 +68,6 @@ const StaffMedicines = () => {
     e.preventDefault();
     const payload = {
       name: form.name,
-      category: form.category || null,
       price: parseFloat(form.price),
       buying_price: form.buying_price ? parseFloat(form.buying_price) : 0,
       stock_quantity: parseInt(form.stock_quantity),
@@ -116,7 +114,6 @@ const StaffMedicines = () => {
     setEditingMed(null);
     setForm({
       name: "",
-      category: "",
       price: "",
       buying_price: "",
       stock_quantity: "",
@@ -131,7 +128,6 @@ const StaffMedicines = () => {
     setEditingMed(med);
     setForm({
       name: med.name,
-      category: med.category || "",
       price: med.price.toString(),
       buying_price: med.buying_price?.toString() || "",
       stock_quantity: med.stock_quantity.toString(),
@@ -146,7 +142,6 @@ const StaffMedicines = () => {
   const handleExport = () => {
     exportToCSV(medicines, "medicines", [
       { key: "name", label: "Name" },
-      { key: "category", label: "Category" },
       { key: "buying_price", label: "Buying Price" },
       { key: "price", label: "Selling Price" },
       { key: "profit", label: "Profit" },
@@ -209,19 +204,6 @@ const StaffMedicines = () => {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
                   />
-                </div>
-                <div>
-                  <Label>Category</Label>
-                  <select
-                    value={form.category}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-primary bg-input"
-                  >
-                    <option value="Animal">Animal</option>
-                    <option value="Human">Human</option>
-                  </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -319,7 +301,6 @@ const StaffMedicines = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Name</TableHead>
-                  <TableHead className="text-xs hidden sm:table-cell">Category</TableHead>
                   <TableHead className="text-right text-xs hidden sm:table-cell">Buying</TableHead>
                   <TableHead className="text-right text-xs">Price</TableHead>
                   <TableHead className="text-right text-xs hidden sm:table-cell">Profit</TableHead>
@@ -331,7 +312,7 @@ const StaffMedicines = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No medicines found
                     </TableCell>
                   </TableRow>
@@ -340,9 +321,6 @@ const StaffMedicines = () => {
                     <TableRow key={med.id}>
                       <TableCell className="text-xs sm:text-sm font-medium max-w-[120px] truncate">
                         {med.name}
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm hidden sm:table-cell">
-                        {med.category || '—'}
                       </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm hidden sm:table-cell">
                         ${Number(med.buying_price || 0).toFixed(2)}

@@ -64,13 +64,13 @@ const AdminDashboard = () => {
       supabase.from('medicines').select('id', { count: 'exact' }),
     ]);
 
-    const twentyDaysFromNow = new Date();
-    twentyDaysFromNow.setDate(twentyDaysFromNow.getDate() + 20);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     
     const { data: expiringData } = await supabase
       .from('medicines')
       .select('id, name, expiry_date, pharmacy_id, pharmacies(name)')
-      .lte('expiry_date', twentyDaysFromNow.toISOString().split('T')[0])
+      .lte('expiry_date', thirtyDaysFromNow.toISOString().split('T')[0])
       .gte('expiry_date', new Date().toISOString().split('T')[0]);
 
     const { data: lowStockData } = await supabase
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Pharmacies" value={stats.totalPharmacies} icon={Building2} variant="primary" />
         <StatCard title="Total Staff" value={stats.totalStaff} icon={Users} variant="info" />
         <StatCard title="Total Medicines" value={stats.totalMedicines} icon={Pill} variant="success" />
-        <StatCard title="Expiring Soon" value={stats.expiringMedicines} icon={AlertTriangle} variant="warning" description="Within 20 days" />
+        <StatCard title="Expiring Soon" value={stats.expiringMedicines} icon={AlertTriangle} variant="warning" description="Within 30 days" />
         <StatCard title="Low Stock" value={stats.lowStockMedicines} icon={TrendingDown} variant="destructive" />
         <StatCard title="Yearly Sales" value={formatCurrency(stats.totalYearlySales)} icon={DollarSign} variant="primary" />
         <StatCard title="Customer Debts" value={formatCurrency(stats.totalCustomerDebt)} icon={CreditCard} variant="warning" description="Unpaid" />
