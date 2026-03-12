@@ -64,8 +64,8 @@ const AdminDashboard = () => {
       supabase.from('medicines').select('id', { count: 'exact' }),
     ]);
 
-    const twentyDaysFromNow = new Date();
-    twentyDaysFromNow.setDate(twentyDaysFromNow.getDate() + 20);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     
     const { data: expiringData } = await supabase
       .from('medicines')
