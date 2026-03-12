@@ -205,19 +205,6 @@ const StaffMedicines = () => {
                     required
                   />
                 </div>
-                <div>
-                  <Label>Category</Label>
-                  <select
-                    value={form.category}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-primary bg-input"
-                  >
-                    <option value="Animal">Animal</option>
-                    <option value="Human">Human</option>
-                  </select>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Buying Price</Label>
