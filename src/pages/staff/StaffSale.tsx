@@ -34,8 +34,20 @@ const StaffSale = () => {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (pharmacyId) fetchMedicines();
+    if (pharmacyId) {
+      fetchMedicines();
+      fetchCustomers();
+    }
   }, [pharmacyId]);
+
+  const fetchCustomers = async () => {
+    const { data } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('pharmacy_id', pharmacyId)
+      .order('name');
+    setCustomers(data || []);
+  };
 
   const fetchMedicines = async () => {
     const { data } = await supabase
