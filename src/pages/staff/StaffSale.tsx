@@ -26,6 +26,7 @@ const StaffSale = () => {
   const [search, setSearch] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [customers, setCustomers] = useState<any[]>([]);
   const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
