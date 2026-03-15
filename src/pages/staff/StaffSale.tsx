@@ -141,6 +141,13 @@ const StaffSale = () => {
       toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
       return;
     }
+    if (paymentMethod === 'debt') {
+      const isRegistered = customers.some(c => c.name.toLowerCase() === customerName.trim().toLowerCase());
+      if (!isRegistered) {
+        toast({ title: 'Error', description: 'Only registered customers can take debt. Please add this customer first.', variant: 'destructive' });
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     try {
