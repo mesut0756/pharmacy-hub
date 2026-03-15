@@ -36,14 +36,35 @@ const StaffRecordSale = () => {
     if (!selectedMed || quantity < 1 || quantity > selectedMed.stock_quantity) return;
     
     const total = selectedMed.price * quantity;
-    await supabase.from('sales').insert({
-      pharmacy_id: pharmacyId,
+    
+    // Create a receipt so it shows in history
+    const { data: receipt, error: receiptError } = await supabase
+      .from('receipts')
+      .insert({
+        pharmacy_id: pharmacyId,
+        staff_id: user?.id,
+        customer_name: 'Walk-in',
+        payment_method: 'cash',
+        total_amount: total,
+      })
+      .select()
+      .single();
+
+    if (receiptError) {
+      toast({ title: 'Error', description: receiptError.message, variant: 'destructive' });
+      return;
+    }
+
+    // Create receipt item
+    await supabase.from('receipt_items').insert({
+      receipt_id: receipt.id,
       medicine_id: selectedMed.id,
-      staff_id: user?.id,
       quantity,
-      unit_price: selectedMed.price,
-      total_amount: total,
+      buying_price: selectedMed.buying_price || 0,
+      selling_price: selectedMed.price,
     });
+
+    // Update stock
     await supabase.from('medicines')
       .update({ stock_quantity: selectedMed.stock_quantity - quantity })
       .eq('id', selectedMed.id);

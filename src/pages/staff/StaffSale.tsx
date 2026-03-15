@@ -26,6 +26,7 @@ const StaffSale = () => {
   const [search, setSearch] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [customers, setCustomers] = useState<any[]>([]);
   const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,8 +34,20 @@ const StaffSale = () => {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (pharmacyId) fetchMedicines();
+    if (pharmacyId) {
+      fetchMedicines();
+      fetchCustomers();
+    }
   }, [pharmacyId]);
+
+  const fetchCustomers = async () => {
+    const { data } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('pharmacy_id', pharmacyId)
+      .order('name');
+    setCustomers(data || []);
+  };
 
   const fetchMedicines = async () => {
     const { data } = await supabase
@@ -128,6 +141,13 @@ const StaffSale = () => {
       toast({ title: 'Error', description: 'Please add medicines to the receipt', variant: 'destructive' });
       return;
     }
+    if (paymentMethod === 'debt') {
+      const isRegistered = customers.some(c => c.name.toLowerCase() === customerName.trim().toLowerCase());
+      if (!isRegistered) {
+        toast({ title: 'Error', description: 'Only registered customers can take debt. Please add this customer first.', variant: 'destructive' });
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     try {
@@ -216,11 +236,24 @@ const StaffSale = () => {
                   <User className="w-4 h-4" />
                   Customer Name
                 </Label>
-                <Input
-                  placeholder="Enter customer name"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                />
+                {paymentMethod === 'debt' ? (
+                  <select
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="w-full rounded px-3 py-2 bg-input text-foreground border border-input"
+                  >
+                    <option value="">Select registered customer</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    placeholder="Enter customer name"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                  />
+                )}
               </div>
 
               {/* Medicine Search */}
