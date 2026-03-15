@@ -45,6 +45,7 @@ const staffNavItems: NavItem[] = [
   { title: 'Medicines', url: '/staff/medicines', icon: Pill },
   { title: 'Record Sales', url: '/staff/recordsales', icon: Notebook },
   { title: 'Receipts', url: '/staff/sale', icon: ReceiptIcon },
+  { title: 'Customers', url: '/staff/customers', icon: User },
   { title: 'Debts', url: '/staff/debts', icon: CreditCard },
   { title: 'History', url: '/staff/history', icon: History },
   { title: 'Notifications', url: '/staff/notifications', icon: Bell, badge: true },

@@ -236,11 +236,24 @@ const StaffSale = () => {
                   <User className="w-4 h-4" />
                   Customer Name
                 </Label>
-                <Input
-                  placeholder="Enter customer name"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                />
+                {paymentMethod === 'debt' ? (
+                  <select
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="w-full rounded px-3 py-2 bg-input text-foreground border border-input"
+                  >
+                    <option value="">Select registered customer</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    placeholder="Enter customer name"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                  />
+                )}
               </div>
 
               {/* Medicine Search */}
