@@ -23,6 +23,7 @@ import StaffNotifications from "./pages/staff/StaffNotifications";
 import StaffProfile from "./pages/staff/StaffProfile";
 import StaffRecordSale from "./pages/staff/StaffRecordSale";
 import StaffDebts from "./pages/staff/StaffDebts";
+import StaffCustomers from "./pages/staff/StaffCustomers";
 
 const queryClient = new QueryClient();
 
