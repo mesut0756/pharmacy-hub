@@ -8,7 +8,6 @@ import {
   Pill,
   ShoppingCart,
   History,
-  User as UserIcon,
   User,
   LogOut,
   Menu,
