@@ -36,6 +36,8 @@ const adminNavItems: NavItem[] = [
   { title: 'Medicines', url: '/admin/medicines', icon: Pill },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
   { title: 'Debts', url: '/admin/debts', icon: CreditCard },
+  { title: 'Customers', url: '/admin/customers', icon: User },
+  { title: 'History', url: '/admin/history', icon: History },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell, badge: true },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];

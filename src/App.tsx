@@ -47,6 +47,8 @@ const App = () => (
               {/* <Route path="profit" element={<AdminProfitAnalytics />} /> */}
               <Route path="receipts" element={<AdminReceipts />} />
               <Route path="debts" element={<AdminDebts />} />
+              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="history" element={<AdminHistory />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
