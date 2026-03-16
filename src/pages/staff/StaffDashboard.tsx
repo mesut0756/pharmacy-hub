@@ -7,24 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pill, AlertTriangle, TrendingDown, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
+import { ExpiringMedicineItem } from '@/components/dashboard/ExpiringMedicineItem';
 
 const StaffDashboard = () => {
   const { pharmacyId } = useAuth();
-  const [stats, setStats] = useState({ 
-    totalMedicines: 0, 
-    lowStock: 0, 
-    expiringSoon: 0, 
-    todaySales: 0, 
-    monthlySales: 0,
-    todayProfit: 0,
-    monthlyProfit: 0
+  const [stats, setStats] = useState({
+    totalMedicines: 0, lowStock: 0, expiringSoon: 0,
+    todaySales: 0, monthlySales: 0, todayProfit: 0, monthlyProfit: 0,
   });
   const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
   const [expiringMedicines, setExpiringMedicines] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (pharmacyId) fetchData();
-  }, [pharmacyId]);
+  useEffect(() => { if (pharmacyId) fetchData(); }, [pharmacyId]);
 
   const fetchData = async () => {
     const { data: medicines } = await supabase.from('medicines').select('*').eq('pharmacy_id', pharmacyId);
@@ -32,49 +26,29 @@ const StaffDashboard = () => {
     const today = new Date().toISOString().split('T')[0];
     const startOfMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`;
 
-    // Fetch receipts for today
-    const { data: todayReceipts } = await supabase
-      .from('receipts')
-      .select('total_amount, receipt_items(quantity, profit)')
-      .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', today);
+    const { data: todayReceipts } = await supabase.from('receipts')
+      .select('total_amount, receipt_items(quantity, profit)').eq('pharmacy_id', pharmacyId).gte('created_at', today);
+    const { data: monthlyReceipts } = await supabase.from('receipts')
+      .select('total_amount, receipt_items(quantity, profit)').eq('pharmacy_id', pharmacyId).gte('created_at', startOfMonth);
+    const { data: recent } = await supabase.from('receipts')
+      .select('*, receipt_items(quantity, selling_price, profit, medicines(name))').eq('pharmacy_id', pharmacyId)
+      .order('created_at', { ascending: false }).limit(5);
 
-    // Fetch receipts for this month
-    const { data: monthlyReceipts } = await supabase
-      .from('receipts')
-      .select('total_amount, receipt_items(quantity, profit)')
-      .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', startOfMonth);
-
-    // Fetch recent receipts
-    const { data: recent } = await supabase
-      .from('receipts')
-      .select('*, receipt_items(quantity, selling_price, profit, medicines(name))')
-      .eq('pharmacy_id', pharmacyId)
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    // Calculate totals
     const todaySales = todayReceipts?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
-    const todayProfit = todayReceipts?.reduce((sum, r) => 
+    const todayProfit = todayReceipts?.reduce((sum, r) =>
       sum + (r.receipt_items?.reduce((p: number, item: any) => p + (Number(item.profit || 0) * item.quantity), 0) || 0), 0) || 0;
-
     const monthlySales = monthlyReceipts?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
-    const monthlyProfit = monthlyReceipts?.reduce((sum, r) => 
+    const monthlyProfit = monthlyReceipts?.reduce((sum, r) =>
       sum + (r.receipt_items?.reduce((p: number, item: any) => p + (Number(item.profit || 0) * item.quantity), 0) || 0), 0) || 0;
 
     setStats({
       totalMedicines: medicines?.length || 0,
       lowStock: medicines?.filter(m => m.stock_quantity <= m.low_stock_threshold).length || 0,
       expiringSoon: medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date()).length || 0,
-      todaySales,
-      monthlySales,
-      todayProfit,
-      monthlyProfit
+      todaySales, monthlySales, todayProfit, monthlyProfit,
     });
     setRecentReceipts(recent || []);
 
-    // Fetch expiring medicines for countdown
     const expiring = medicines?.filter(m => m.expiry_date && new Date(m.expiry_date) <= thirtyDays && new Date(m.expiry_date) >= new Date())
       .sort((a: any, b: any) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()) || [];
     setExpiringMedicines(expiring);
@@ -95,27 +69,28 @@ const StaffDashboard = () => {
         <StatCard title="Monthly Profit" value={formatCurrency(stats.monthlyProfit)} icon={TrendingUp} variant="info" />
       </div>
 
-      {/* Expiring Medicines Countdown */}
+      {/* Expiring Medicines Countdown - Yellow themed */}
       {expiringMedicines.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><AlertTriangle className="w-5 h-5 text-warning" />Expiring Medicines Countdown</CardTitle></CardHeader>
+        <Card className="border-yellow-400/50 bg-yellow-50/60 dark:bg-yellow-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
+              <div className="p-1.5 rounded-lg bg-yellow-400/20">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              Expiring Medicines Countdown
+            </CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {expiringMedicines.map((med: any) => {
                 const daysLeft = Math.ceil((new Date(med.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                return (
-                  <div key={med.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-                    <p className="font-medium text-sm">{med.name}</p>
-                    <Badge variant={daysLeft <= 7 ? 'destructive' : daysLeft <= 15 ? 'secondary' : 'outline'}>
-                      {daysLeft} days left
-                    </Badge>
-                  </div>
-                );
+                return <ExpiringMedicineItem key={med.id} name={med.name} daysLeft={daysLeft} />;
               })}
             </div>
           </CardContent>
         </Card>
       )}
+
       <Card>
         <CardHeader><CardTitle>Recent Receipts</CardTitle></CardHeader>
         <CardContent>

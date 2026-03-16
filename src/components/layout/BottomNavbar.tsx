@@ -1,21 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Pill,
-  Notebook,
-  ReceiptIcon,
-  CreditCard,
-  History,
-  Bell,
-  User,
-  Building2,
-  ShoppingCart,
-  Settings,
-  MoreHorizontal,
-  X,
-  Moon,
-  Sun,
-  LogOut,
+  LayoutDashboard, Pill, Notebook, ReceiptIcon, CreditCard, History,
+  Bell, User, Building2, ShoppingCart, Settings, MoreHorizontal, X,
+  Moon, Sun, LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -54,14 +41,26 @@ const staffNavItems: NavItem[] = [
   { title: 'Profile', url: '/staff/profile', icon: User },
 ];
 
-const NavIcon = ({ item, isActive, showBadge }: { item: NavItem; isActive: boolean; showBadge: boolean }) => (
+const NotificationBellIcon = ({ hasUnread, count }: { hasUnread: boolean; count: number }) => (
   <div className="relative">
-    <item.icon className="w-5 h-5" />
-    {item.badge && showBadge && (
-      <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-destructive border-2 border-card animate-pulse" />
+    <Bell className={cn("w-5 h-5 transition-all", hasUnread && "text-yellow-500 dark:text-yellow-400")} />
+    {hasUnread && (
+      <>
+        <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center px-1 shadow-sm">
+          {count > 99 ? '99+' : count}
+        </span>
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
+      </>
     )}
   </div>
 );
+
+const NavIcon = ({ item, isActive, showBadge, unreadCount }: { item: NavItem; isActive: boolean; showBadge: boolean; unreadCount: number }) => {
+  if (item.badge && item.icon === Bell) {
+    return <NotificationBellIcon hasUnread={showBadge} count={unreadCount} />;
+  }
+  return <item.icon className="w-5 h-5" />;
+};
 
 export const BottomNavbar = () => {
   const { isAdmin, signOut, user } = useAuth();
@@ -76,7 +75,6 @@ export const BottomNavbar = () => {
 
   const onNotificationsPage = location.pathname.includes('/notifications');
 
-  // Fetch unread notification count
   useEffect(() => {
     const fetchUnread = async () => {
       if (!user) return;
@@ -94,9 +92,7 @@ export const BottomNavbar = () => {
   const hasUnread = unreadCount > 0 && !onNotificationsPage;
 
   const isActive = (path: string) => {
-    if (path === '/admin' || path === '/staff') {
-      return location.pathname === path;
-    }
+    if (path === '/admin' || path === '/staff') return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
@@ -105,15 +101,10 @@ export const BottomNavbar = () => {
 
   return (
     <>
-      {/* More menu overlay */}
       {moreOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setMoreOpen(false)}
-        />
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMoreOpen(false)} />
       )}
 
-      {/* More menu panel */}
       {moreOpen && (
         <div className="fixed bottom-16 left-0 right-0 z-50 lg:hidden animate-slide-up">
           <div className="mx-3 mb-2 rounded-xl border border-border bg-card shadow-lg p-2 space-y-1">
@@ -128,7 +119,7 @@ export const BottomNavbar = () => {
                   isActive(item.url) && "bg-primary text-primary-foreground hover:bg-primary"
                 )}
               >
-                <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} />
+                <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} unreadCount={unreadCount} />
                 <span className="font-medium text-sm">{item.title}</span>
                 {item.badge && hasUnread && (
                   <span className="ml-auto text-[10px] font-bold bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
@@ -138,18 +129,14 @@ export const BottomNavbar = () => {
               </NavLink>
             ))}
 
-            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors active:scale-95 transition-transform duration-150 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              <span className="font-medium text-sm">
-                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-              </span>
+              <span className="font-medium text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
 
-            {/* Logout */}
             <button
               onClick={signOut}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors active:scale-95 transition-transform duration-150 text-destructive hover:bg-destructive/10"
@@ -161,7 +148,6 @@ export const BottomNavbar = () => {
         </div>
       )}
 
-      {/* Bottom navbar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-border bg-card">
         <div className="flex items-center justify-around h-16 px-1">
           {visibleItems.map((item) => (
@@ -174,12 +160,11 @@ export const BottomNavbar = () => {
                 isActive(item.url) && "text-primary"
               )}
             >
-              <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} />
+              <NavIcon item={item} isActive={isActive(item.url)} showBadge={hasUnread} unreadCount={unreadCount} />
               <span className="text-[10px] font-medium">{item.title}</span>
             </NavLink>
           ))}
 
-          {/* More button */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
             className={cn(
