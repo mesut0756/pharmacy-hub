@@ -37,6 +37,8 @@ const adminNavItems: NavItem[] = [
   // { title: 'Profit Analytics', url: '/admin/profit', icon: FileBarChart },
   { title: 'Receipts', url: '/admin/receipts', icon: ShoppingCart },
   { title: 'Debts', url: '/admin/debts', icon: CreditCard },
+  { title: 'Customers', url: '/admin/customers', icon: User },
+  { title: 'Sales History', url: '/admin/history', icon: History },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];

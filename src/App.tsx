@@ -15,6 +15,8 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReceipts from "./pages/admin/AdminReceipts";
 import AdminDebts from "./pages/admin/AdminDebts";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminHistory from "./pages/admin/AdminHistory";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffMedicines from "./pages/staff/StaffMedicines";
 import StaffSale from "./pages/staff/StaffSale";
@@ -45,6 +47,8 @@ const App = () => (
               {/* <Route path="profit" element={<AdminProfitAnalytics />} /> */}
               <Route path="receipts" element={<AdminReceipts />} />
               <Route path="debts" element={<AdminDebts />} />
+              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="history" element={<AdminHistory />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
