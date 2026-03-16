@@ -57,7 +57,7 @@ const AdminCustomers = () => {
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
   return (
-    <PullToRefreshContainer onRefresh={() => refetch()} className="space-y-6">
+    <PullToRefreshContainer onRefresh={async () => { await refetch(); }} className="space-y-6">
       <PageHeader title="All Customers" description="View customers across all pharmacies" />
 
       <Card>

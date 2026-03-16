@@ -123,7 +123,7 @@ const AdminHistory = () => {
   };
 
   return (
-    <PullToRefreshContainer onRefresh={() => refetch()} className="space-y-6">
+    <PullToRefreshContainer onRefresh={async () => { await refetch(); }} className="space-y-6">
       <PageHeader title="Sales History" description="View all receipts across pharmacies">
         <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="w-4 h-4 mr-2" />Export
