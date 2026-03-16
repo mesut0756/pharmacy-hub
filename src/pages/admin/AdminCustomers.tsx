@@ -4,15 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Search, Users, Phone } from 'lucide-react';
+import { Search, Users, Phone, Building2 } from 'lucide-react';
 import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
 
 const AdminCustomers = () => {
   const [search, setSearch] = useState('');
+  const [pharmacyFilter, setPharmacyFilter] = useState('');
+
+  const { data: pharmacies = [] } = useQuery({
+    queryKey: ['admin-pharmacies-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('pharmacies').select('id, name').order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: customers = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-customers'],
@@ -45,10 +56,12 @@ const AdminCustomers = () => {
     },
   });
 
-  const filtered = customers.filter((c: any) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.pharmacies?.name || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = customers
+    .filter((c: any) => !pharmacyFilter || c.pharmacy_id === pharmacyFilter)
+    .filter((c: any) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.pharmacies?.name || '').toLowerCase().includes(search.toLowerCase())
+    );
 
   const getOwed = (name: string, pharmacyId: string) =>
     debtTotals[`${name.toLowerCase()}_${pharmacyId}`] || 0;
@@ -60,24 +73,39 @@ const AdminCustomers = () => {
     <PullToRefreshContainer onRefresh={async () => { await refetch(); }} className="space-y-6">
       <PageHeader title="All Customers" description="View customers across all pharmacies" />
 
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 flex-1">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or pharmacy..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={pharmacyFilter}
+            onChange={e => setPharmacyFilter(e.target.value)}
+            className="rounded px-3 py-2 bg-input text-foreground text-sm"
+          >
+            <option value="">All Pharmacies</option>
+            {pharmacies.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {customers.length} Customer{customers.length !== 1 ? 's' : ''}
+            {filtered.length} Customer{filtered.length !== 1 ? 's' : ''}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or pharmacy..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-
           {/* Mobile */}
           <div className="space-y-3 lg:hidden">
             {isLoading ? (

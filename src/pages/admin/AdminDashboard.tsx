@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
+import { ExpiringMedicineItem } from '@/components/dashboard/ExpiringMedicineItem';
 
 interface DashboardStats {
   totalPharmacies: number;
@@ -36,14 +37,9 @@ interface LowStockMedicine {
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
-    totalPharmacies: 0,
-    totalStaff: 0,
-    totalMedicines: 0,
-    expiringMedicines: 0,
-    lowStockMedicines: 0,
-    totalYearlySales: 0,
-    totalCustomerDebt: 0,
-    totalAdminDebtUnpaid: 0,
+    totalPharmacies: 0, totalStaff: 0, totalMedicines: 0,
+    expiringMedicines: 0, lowStockMedicines: 0, totalYearlySales: 0,
+    totalCustomerDebt: 0, totalAdminDebtUnpaid: 0,
   });
   const [salesData, setSalesData] = useState<{ month: string; total: number }[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -51,13 +47,10 @@ const AdminDashboard = () => {
   const [lowStockMedicines, setLowStockMedicines] = useState<LowStockMedicine[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedYear]);
+  useEffect(() => { fetchDashboardData(); }, [selectedYear]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
-
     const [pharmaciesRes, staffRes, medicinesRes] = await Promise.all([
       supabase.from('pharmacies').select('id', { count: 'exact' }),
       supabase.from('pharmacy_staff').select('id', { count: 'exact' }),
@@ -66,7 +59,7 @@ const AdminDashboard = () => {
 
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    
+
     const { data: expiringData } = await supabase
       .from('medicines')
       .select('id, name, expiry_date, pharmacy_id, pharmacies(name)')
@@ -79,14 +72,10 @@ const AdminDashboard = () => {
 
     const startOfYear = `${selectedYear}-01-01T00:00:00`;
     const endOfYear = `${selectedYear}-12-31T23:59:59`;
-    
     const { data: salesRes } = await supabase
-      .from('receipts')
-      .select('created_at, total_amount')
-      .gte('created_at', startOfYear)
-      .lte('created_at', endOfYear);
+      .from('receipts').select('created_at, total_amount')
+      .gte('created_at', startOfYear).lte('created_at', endOfYear);
 
-    // Fetch debt data
     const [customerDebtRes, adminDebtRes] = await Promise.all([
       supabase.from('receipts').select('total_amount').eq('payment_method', 'debt').is('debt_paid_at', null),
       supabase.from('admin_debts').select('amount').eq('is_paid', false),
@@ -95,66 +84,44 @@ const AdminDashboard = () => {
     const totalCustomerDebt = customerDebtRes.data?.reduce((sum, r) => sum + Number(r.total_amount), 0) || 0;
     const totalAdminDebtUnpaid = adminDebtRes.data?.reduce((sum, d) => sum + Number(d.amount), 0) || 0;
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlySales = months.map((month, index) => {
-      const monthSales = salesRes?.filter(receipt => {
-        const receiptMonth = new Date(receipt.created_at).getMonth();
-        return receiptMonth === index;
-      }).reduce((sum, receipt) => sum + Number(receipt.total_amount), 0) || 0;
-      return { month, total: monthSales };
-    });
-
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlySales = months.map((month, index) => ({
+      month,
+      total: salesRes?.filter(r => new Date(r.created_at).getMonth() === index)
+        .reduce((sum, r) => sum + Number(r.total_amount), 0) || 0,
+    }));
     const totalYearlySales = monthlySales.reduce((sum, m) => sum + m.total, 0);
 
     const processedExpiring: ExpiringMedicine[] = (expiringData || []).map((m: any) => ({
-      id: m.id,
-      name: m.name,
-      pharmacy_name: m.pharmacies?.name || 'Unknown',
-      days_until_expiry: Math.ceil((new Date(m.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
+      id: m.id, name: m.name, pharmacy_name: m.pharmacies?.name || 'Unknown',
+      days_until_expiry: Math.ceil((new Date(m.expiry_date).getTime() - new Date().getTime()) / (1000*60*60*24)),
     }));
 
     const processedLowStock: LowStockMedicine[] = (lowStockData || [])
       .filter((m: any) => m.stock_quantity <= m.low_stock_threshold)
       .map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        pharmacy_name: m.pharmacies?.name || 'Unknown',
+        id: m.id, name: m.name, pharmacy_name: m.pharmacies?.name || 'Unknown',
         stock_quantity: m.stock_quantity,
       }));
 
     setStats({
-      totalPharmacies: pharmaciesRes.count || 0,
-      totalStaff: staffRes.count || 0,
-      totalMedicines: medicinesRes.count || 0,
-      expiringMedicines: processedExpiring.length,
-      lowStockMedicines: processedLowStock.length,
-      totalYearlySales,
-      totalCustomerDebt,
-      totalAdminDebtUnpaid,
+      totalPharmacies: pharmaciesRes.count || 0, totalStaff: staffRes.count || 0,
+      totalMedicines: medicinesRes.count || 0, expiringMedicines: processedExpiring.length,
+      lowStockMedicines: processedLowStock.length, totalYearlySales, totalCustomerDebt, totalAdminDebtUnpaid,
     });
-
     setSalesData(monthlySales);
     setExpiringMedicines(processedExpiring.slice(0, 5));
     setLowStockMedicines(processedLowStock.slice(0, 5));
     setLoading(false);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
 
   return (
     <PullToRefreshContainer onRefresh={fetchDashboardData} className="space-y-8">
-      <PageHeader
-        title="Admin Dashboard"
-        description="Overview of all pharmacy operations"
-      />
+      <PageHeader title="Admin Dashboard" description="Overview of all pharmacy operations" />
 
-      {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Pharmacies" value={stats.totalPharmacies} icon={Building2} variant="primary" />
         <StatCard title="Total Staff" value={stats.totalStaff} icon={Users} variant="info" />
@@ -166,22 +133,16 @@ const AdminDashboard = () => {
         <StatCard title="Admin Debts" value={formatCurrency(stats.totalAdminDebtUnpaid)} icon={CreditCard} variant="destructive" description="Unpaid" />
       </div>
 
-      {/* Sales Chart */}
-      <YearlySalesChart
-        data={salesData}
-        title="Overall Yearly Sales"
-        year={selectedYear}
-        onYearChange={setSelectedYear}
-        availableYears={[2026, 2027, 2028]}
-      />
+      <YearlySalesChart data={salesData} title="Overall Yearly Sales" year={selectedYear} onYearChange={setSelectedYear} availableYears={[2026,2027,2028]} />
 
-      {/* Alerts Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Expiring Medicines */}
-        <Card className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        {/* Expiring Medicines - Yellow themed */}
+        <Card className="animate-slide-up border-yellow-400/50 bg-yellow-50/60 dark:bg-yellow-950/20" style={{ animationDelay: '0.1s' }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+            <CardTitle className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
+              <div className="p-1.5 rounded-lg bg-yellow-400/20">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
               Medicines Expiring Soon
             </CardTitle>
           </CardHeader>
@@ -190,39 +151,27 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground text-center py-4">No medicines expiring soon</p>
             ) : (
               <>
-                {/* Mobile card layout */}
                 <div className="space-y-3 lg:hidden">
-                  {expiringMedicines.map((med) => (
-                    <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                      <div>
-                        <p className="font-medium">{med.name}</p>
-                        <p className="text-sm text-muted-foreground">{med.pharmacy_name}</p>
-                      </div>
-                      <Badge variant={med.days_until_expiry <= 5 ? 'destructive' : 'secondary'}>
-                        {med.days_until_expiry} days
-                      </Badge>
-                    </div>
+                  {expiringMedicines.map(med => (
+                    <ExpiringMedicineItem key={med.id} name={med.name} subtitle={med.pharmacy_name} daysLeft={med.days_until_expiry} />
                   ))}
                 </div>
-                {/* Desktop table layout */}
-                <div className="hidden lg:block rounded-md border">
+                <div className="hidden lg:block rounded-md border border-yellow-300/50 overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="bg-yellow-100/50 dark:bg-yellow-900/20">
                         <TableHead>Medicine</TableHead>
                         <TableHead>Pharmacy</TableHead>
                         <TableHead className="text-right">Expiry</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {expiringMedicines.map((med) => (
-                        <TableRow key={med.id}>
+                      {expiringMedicines.map(med => (
+                        <TableRow key={med.id} className="hover:bg-yellow-100/30 dark:hover:bg-yellow-900/10">
                           <TableCell className="font-medium">{med.name}</TableCell>
                           <TableCell className="text-muted-foreground">{med.pharmacy_name}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant={med.days_until_expiry <= 5 ? 'destructive' : 'secondary'}>
-                              {med.days_until_expiry} days
-                            </Badge>
+                            <ExpiringMedicineItem name="" daysLeft={med.days_until_expiry} badgeOnly />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -234,7 +183,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Low Stock Medicines */}
+        {/* Low Stock */}
         <Card className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -247,10 +196,9 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground text-center py-4">All medicines are well stocked</p>
             ) : (
               <>
-                {/* Mobile card layout */}
                 <div className="space-y-3 lg:hidden">
-                  {lowStockMedicines.map((med) => (
-                    <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  {lowStockMedicines.map(med => (
+                    <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                       <div>
                         <p className="font-medium">{med.name}</p>
                         <p className="text-sm text-muted-foreground">{med.pharmacy_name}</p>
@@ -259,25 +207,12 @@ const AdminDashboard = () => {
                     </div>
                   ))}
                 </div>
-                {/* Desktop table layout */}
                 <div className="hidden lg:block rounded-md border">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Medicine</TableHead>
-                        <TableHead>Pharmacy</TableHead>
-                        <TableHead className="text-right">Stock</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Medicine</TableHead><TableHead>Pharmacy</TableHead><TableHead className="text-right">Stock</TableHead></TableRow></TableHeader>
                     <TableBody>
-                      {lowStockMedicines.map((med) => (
-                        <TableRow key={med.id}>
-                          <TableCell className="font-medium">{med.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{med.pharmacy_name}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant="destructive">{med.stock_quantity} left</Badge>
-                          </TableCell>
-                        </TableRow>
+                      {lowStockMedicines.map(med => (
+                        <TableRow key={med.id}><TableCell className="font-medium">{med.name}</TableCell><TableCell className="text-muted-foreground">{med.pharmacy_name}</TableCell><TableCell className="text-right"><Badge variant="destructive">{med.stock_quantity} left</Badge></TableCell></TableRow>
                       ))}
                     </TableBody>
                   </Table>

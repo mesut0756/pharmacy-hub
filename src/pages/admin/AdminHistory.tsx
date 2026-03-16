@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, Download, Search } from 'lucide-react';
+import { History, Download, Search, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { exportToCSV, formatDateTime } from '@/lib/exportUtils';
 import { PullToRefreshContainer } from '@/components/ui/pull-to-refresh-container';
@@ -32,6 +32,7 @@ interface ReceiptData {
   total_amount: number;
   created_at: string;
   staff_id: string;
+  pharmacy_id: string;
   receipt_items: ReceiptItem[];
   pharmacies: { name: string } | null;
   profiles: { full_name: string | null; email: string } | null;
@@ -41,7 +42,17 @@ const AdminHistory = () => {
   const { toast } = useToast();
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [pharmacyFilter, setPharmacyFilter] = useState('');
   const [search, setSearch] = useState('');
+
+  const { data: pharmacies = [] } = useQuery({
+    queryKey: ['admin-pharmacies-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('pharmacies').select('id, name').order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: receipts = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-history'],
@@ -49,7 +60,7 @@ const AdminHistory = () => {
       const { data, error } = await supabase
         .from('receipts')
         .select(`
-          id, customer_name, payment_method, total_amount, created_at, staff_id,
+          id, customer_name, payment_method, total_amount, created_at, staff_id, pharmacy_id,
           receipt_items (id, medicine_id, quantity, buying_price, selling_price, profit, total, medicines(name)),
           pharmacies(name)
         `)
@@ -57,7 +68,6 @@ const AdminHistory = () => {
         .limit(200);
       if (error) throw error;
 
-      // Fetch staff names
       const staffIds = [...new Set((data || []).map(r => r.staff_id))];
       let profileMap: Record<string, { full_name: string | null; email: string }> = {};
       if (staffIds.length > 0) {
@@ -81,6 +91,7 @@ const AdminHistory = () => {
   };
 
   const filtered = receipts
+    .filter(r => !pharmacyFilter || r.pharmacy_id === pharmacyFilter)
     .filter(r => !paymentFilter || r.payment_method === paymentFilter)
     .filter(r =>
       !search ||
@@ -130,15 +141,28 @@ const AdminHistory = () => {
         </Button>
       </PageHeader>
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-        <div className="flex items-center gap-2 flex-1">
-          <Search className="h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Input
             placeholder="Search customer or pharmacy..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="max-w-sm"
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={pharmacyFilter}
+            onChange={e => setPharmacyFilter(e.target.value)}
+            className="rounded px-3 py-2 bg-input text-foreground text-sm"
+          >
+            <option value="">All Pharmacies</option>
+            {pharmacies.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-sm whitespace-nowrap">Payment:</Label>
@@ -207,7 +231,6 @@ const AdminHistory = () => {
         </CardContent>
       </Card>
 
-      {/* Receipt Detail Modal */}
       <Dialog open={!!selectedReceipt} onOpenChange={open => !open && setSelectedReceipt(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
