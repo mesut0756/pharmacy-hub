@@ -52,14 +52,12 @@ export const usePushNotifications = () => {
   const showNativeNotification = useCallback((title: string, body: string) => {
     if (permissionState !== 'granted') return;
     try {
-      const notification = new Notification(title, {
+      const options: NotificationOptions & Record<string, unknown> = {
         body,
         icon: '/placeholder.svg',
-        badge: '/placeholder.svg',
         tag: 'pharmacy-alert',
-        renotify: true,
-        vibrate: [200, 100, 200],
-      });
+      };
+      const notification = new Notification(title, options);
       notification.onclick = () => {
         window.focus();
         notification.close();
