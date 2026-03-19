@@ -58,14 +58,15 @@ export const usePushNotifications = () => {
     try {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration) {
-        await registration.showNotification(title, {
+        const opts: NotificationOptions & Record<string, unknown> = {
           body,
           icon: '/pwa-icon-192.png',
           badge: '/pwa-icon-192.png',
           tag: 'pharmacy-alert',
           vibrate: [200, 100, 200, 100, 200],
           data: { url: url || '/' },
-        });
+        };
+        await registration.showNotification(title, opts);
         return;
       }
     } catch {}
