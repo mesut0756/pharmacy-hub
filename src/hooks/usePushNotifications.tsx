@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 const NOTIFICATION_SOUND_URL = 'https://actions.google.com/sounds/v1/alerts/notification_simple-01.ogg';
 
 export const usePushNotifications = () => {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -16,9 +16,7 @@ export const usePushNotifications = () => {
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
     audioRef.current.volume = 0.6;
-    return () => {
-      audioRef.current = null;
-    };
+    return () => { audioRef.current = null; };
   }, []);
 
   // Check permission state
@@ -30,38 +28,52 @@ export const usePushNotifications = () => {
     setPermissionState(Notification.permission);
   }, []);
 
+  // Register custom SW for push events
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-push.js', { scope: '/' }).catch(() => {});
+    }
+  }, []);
+
   const requestPermission = useCallback(async () => {
     if (!('Notification' in window)) return 'unsupported' as const;
     const result = await Notification.requestPermission();
     setPermissionState(result);
+    hasRequestedRef.current = true;
     return result;
   }, []);
 
   const playSound = useCallback(() => {
-    try {
-      audioRef.current?.play().catch(() => {});
-    } catch {}
+    try { audioRef.current?.play().catch(() => {}); } catch {}
   }, []);
 
   const vibrate = useCallback(() => {
-    try {
-      navigator.vibrate?.([200, 100, 200]);
-    } catch {}
+    try { navigator.vibrate?.([200, 100, 200]); } catch {}
   }, []);
 
-  const showNativeNotification = useCallback((title: string, body: string) => {
+  const showNotification = useCallback(async (title: string, body: string, url?: string) => {
     if (permissionState !== 'granted') return;
+
+    // Try service worker notification (works in background)
     try {
-      const options: NotificationOptions & Record<string, unknown> = {
-        body,
-        icon: '/placeholder.svg',
-        tag: 'pharmacy-alert',
-      };
-      const notification = new Notification(title, options);
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        await registration.showNotification(title, {
+          body,
+          icon: '/pwa-icon-192.png',
+          badge: '/pwa-icon-192.png',
+          tag: 'pharmacy-alert',
+          vibrate: [200, 100, 200, 100, 200],
+          data: { url: url || '/' },
+        });
+        return;
+      }
+    } catch {}
+
+    // Fallback to basic Notification API
+    try {
+      const n = new Notification(title, { body, icon: '/pwa-icon-192.png', tag: 'pharmacy-alert' });
+      n.onclick = () => { window.focus(); n.close(); };
     } catch {}
   }, [permissionState]);
 
@@ -73,24 +85,17 @@ export const usePushNotifications = () => {
       .channel('new-notifications')
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-        },
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
         (payload) => {
           const newNotif = payload.new as any;
           const typeLabel = newNotif.type === 'expiring' ? '⚠️ Expiring Medicine' : '📦 Low Stock Alert';
           const message = newNotif.message || 'New pharmacy alert';
+          const notifUrl = '/staff/notifications';
 
-          // Play sound & vibrate
           playSound();
           vibrate();
+          showNotification(typeLabel, message, notifUrl);
 
-          // Show native notification
-          showNativeNotification(typeLabel, message);
-
-          // Also show in-app toast
           toast({
             title: typeLabel,
             description: message,
@@ -100,10 +105,8 @@ export const usePushNotifications = () => {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, playSound, vibrate, showNativeNotification, toast]);
+    return () => { supabase.removeChannel(channel); };
+  }, [user, playSound, vibrate, showNotification, toast]);
 
   return {
     permissionState,
