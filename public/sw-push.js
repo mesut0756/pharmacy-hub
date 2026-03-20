@@ -27,19 +27,14 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'dismiss') return;
-
-  const url = event.notification.data?.url || '/';
-
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(url);
           return client.focus();
         }
       }
-      return self.clients.openWindow(url);
+      return self.clients.openWindow('/');
     })
   );
 });
