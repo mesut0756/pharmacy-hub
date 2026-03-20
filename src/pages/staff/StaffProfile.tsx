@@ -61,9 +61,27 @@ const StaffProfile = () => {
                 </Button>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Open this app in your mobile browser to install it on your home screen.
-              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Install this app on your device for quick access and offline support.
+                </p>
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <p className="text-sm font-medium flex items-center gap-2"><Smartphone className="w-4 h-4" /> iOS (Safari)</p>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Tap the <span className="inline-flex items-center gap-1 font-medium text-foreground"><Share2 className="w-3.5 h-3.5" /> Share</span> button in Safari</li>
+                    <li>Scroll down and tap <span className="font-medium text-foreground">"Add to Home Screen"</span></li>
+                    <li>Tap <span className="font-medium text-foreground">"Add"</span> to confirm</li>
+                  </ol>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <p className="text-sm font-medium flex items-center gap-2"><Smartphone className="w-4 h-4" /> Android (Chrome)</p>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Tap the <span className="font-medium text-foreground">⋮ menu</span> in Chrome</li>
+                    <li>Tap <span className="font-medium text-foreground">"Install app"</span> or <span className="font-medium text-foreground">"Add to Home Screen"</span></li>
+                    <li>Tap <span className="font-medium text-foreground">"Install"</span> to confirm</li>
+                  </ol>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
