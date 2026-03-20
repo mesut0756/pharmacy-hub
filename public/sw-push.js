@@ -19,13 +19,6 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'pharmacy-alert',
     renotify: true,
     vibrate: [200, 100, 200, 100, 200],
-    data: {
-      url: data.url || '/',
-    },
-    actions: [
-      { action: 'view', title: 'View' },
-      { action: 'dismiss', title: 'Dismiss' },
-    ],
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));

@@ -51,7 +51,7 @@ export const usePushNotifications = () => {
     try { navigator.vibrate?.([200, 100, 200]); } catch {}
   }, []);
 
-  const showNotification = useCallback(async (title: string, body: string, url?: string) => {
+  const showNotification = useCallback(async (title: string, body: string) => {
     if (permissionState !== 'granted') return;
 
     // Try service worker notification (works in background)
@@ -64,7 +64,6 @@ export const usePushNotifications = () => {
           badge: '/pwa-icon-192.png',
           tag: 'pharmacy-alert',
           vibrate: [200, 100, 200, 100, 200],
-          data: { url: url || '/' },
         };
         await registration.showNotification(title, opts);
         return;
