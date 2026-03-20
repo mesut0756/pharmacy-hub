@@ -51,7 +51,7 @@ export const usePushNotifications = () => {
     try { navigator.vibrate?.([200, 100, 200]); } catch {}
   }, []);
 
-  const showNotification = useCallback(async (title: string, body: string, url?: string) => {
+  const showNotification = useCallback(async (title: string, body: string) => {
     if (permissionState !== 'granted') return;
 
     // Try service worker notification (works in background)
@@ -64,7 +64,6 @@ export const usePushNotifications = () => {
           badge: '/pwa-icon-192.png',
           tag: 'pharmacy-alert',
           vibrate: [200, 100, 200, 100, 200],
-          data: { url: url || '/' },
         };
         await registration.showNotification(title, opts);
         return;
@@ -89,13 +88,14 @@ export const usePushNotifications = () => {
         { event: 'INSERT', schema: 'public', table: 'notifications' },
         (payload) => {
           const newNotif = payload.new as any;
-          const typeLabel = newNotif.type === 'expiring' ? '⚠️ Expiring Medicine' : '📦 Low Stock Alert';
+          const typeLabel = newNotif.type === 'expiring' ? '⚠️ Expiring Medicine' 
+            : newNotif.type === 'low_stock' ? '📦 Low Stock Alert' 
+            : '💊 Pharmacy Alert';
           const message = newNotif.message || 'New pharmacy alert';
-          const notifUrl = '/staff/notifications';
 
           playSound();
           vibrate();
-          showNotification(typeLabel, message, notifUrl);
+          showNotification(typeLabel, message);
 
           toast({
             title: typeLabel,
