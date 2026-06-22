@@ -36,61 +36,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      const [{ data: roleData }, { data: staffData }] = await Promise.all([
+        supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
+        supabase.from('pharmacy_staff').select('pharmacy_id').eq('user_id', userId).maybeSingle(),
+      ]);
 
-      if (roleData) {
-        setRole(roleData.role);
-      }
-
-      // Fetch pharmacy assignment for staff
-      const { data: staffData } = await supabase
-        .from('pharmacy_staff')
-        .select('pharmacy_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (staffData) {
-        setPharmacyId(staffData.pharmacy_id);
-      }
+      setRole(roleData?.role ?? null);
+      setPharmacyId(staffData?.pharmacy_id ?? null);
     } catch (error) {
       console.error('Error fetching user role:', error);
+      setRole(null);
+      setPharmacyId(null);
     }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
 
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        } else {
-          setRole(null);
-          setPharmacyId(null);
-        }
-
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async (session: Session | null) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id);
+      } else {
+        setRole(null);
+        setPharmacyId(null);
       }
-      setLoading(false);
+
+      if (mounted) setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        // Defer async work so we don't block the auth callback
+        setTimeout(() => initializeAuth(session), 0);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      initializeAuth(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
