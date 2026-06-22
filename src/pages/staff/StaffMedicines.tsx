@@ -66,6 +66,14 @@ const StaffMedicines = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pharmacyId) {
+      toast({
+        title: "No pharmacy assigned",
+        description: "Your account isn't linked to a pharmacy. Contact an admin.",
+        variant: "destructive",
+      });
+      return;
+    }
     const payload = {
       name: form.name,
       price: parseFloat(form.price),
@@ -80,10 +88,18 @@ const StaffMedicines = () => {
     };
 
     if (editingMed) {
-      await supabase.from("medicines").update(payload).eq("id", editingMed.id);
+      const { error } = await supabase.from("medicines").update(payload).eq("id", editingMed.id);
+      if (error) {
+        toast({ title: "Update failed", description: error.message, variant: "destructive" });
+        return;
+      }
       toast({ title: "Medicine updated" });
     } else {
-      await supabase.from("medicines").insert(payload);
+      const { error } = await supabase.from("medicines").insert(payload);
+      if (error) {
+        toast({ title: "Add failed", description: error.message, variant: "destructive" });
+        return;
+      }
       toast({ title: "Medicine added" });
     }
     resetForm();
